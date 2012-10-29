@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:repo="http://www.springframework.org/schema/data/repository"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:rest="http://clix.biz.daum.net/schema/rest"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.1.xsd
+       http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+       http://www.springframework.org/schema/data/repository http://www.springframework.org/schema/data/repository/spring-repository.xsd
+       http://clix.biz.daum.net/schema/rest http://clix.biz.daum.net/schema/rest/spring-rest.xsd">
+
+	<context:annotation-config />
+
+	<bean id="restClient"
+		class="net.daum.clix.springframework.data.rest.client.http.CommonsRestClient">
+		<constructor-arg value="http://localhost:8080/data"/>
+	</bean>
+
+	<rest:repositories base-package="org.springframework.data.rest.example" />
+</beans>

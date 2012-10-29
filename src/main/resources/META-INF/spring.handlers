@@ -1,0 +1,1 @@
+http\://clix.biz.daum.net/schema/rest=net.daum.clix.springframework.data.rest.client.config.RestRepositoryNamespaceHandler

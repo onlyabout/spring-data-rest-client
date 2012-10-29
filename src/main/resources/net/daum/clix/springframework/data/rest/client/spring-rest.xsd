@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xsd:schema xmlns="http://clix.biz.daum.net/schema/rest"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://clix.biz.daum.net/schema/rest"
+	elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+	<xsd:element name="repositories">
+		<xsd:complexType>
+			<xsd:attribute name="base-package" use="required" type="xsd:string" />
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

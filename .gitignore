@@ -1,0 +1,8 @@
+target/
+.settings/
+.gradle/
+.project
+.classpath
+.springBeans
+.sonar4clipse
+*.sonar4clipseExternals
