@@ -1,18 +1,14 @@
 package net.daum.clix.springframework.data.rest.client.lazy;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.springframework.core.io.Resource;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.ResourceSupport;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 import net.daum.clix.springframework.data.rest.client.http.RestClientBase;
+
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.util.Assert;
 
 /**
  * Iterable implementation for PagingAndSortingRepository#findAll() to load data
@@ -73,7 +69,8 @@ public class RestIterableLoader<T> implements Iterable<T> {
 		}
 
 		public T next() {
-			T object = collection.
+//			T object = collection.
+			throw new IllegalAccessError("Iterator<T>#next has not implemented yet!");
 		}
 
 		public void remove() {
