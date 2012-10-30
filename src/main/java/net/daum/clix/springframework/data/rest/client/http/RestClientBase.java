@@ -136,7 +136,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		String url = urlBuilder.build(entityInfo.getJavaType());
 		if (isPageableRepository(entityInfo.getJavaType()))
-			return new RestIterableLoader(this, url, entityInfo.getJavaType());
+			return new RestIterableLoader(this, url, entityInfo);
 		
 		return getForList(url, entityInfo.getJavaType());
 	}
@@ -218,7 +218,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		return list;
 	}
 
-	private <T, ID extends Serializable> T getLazyLoadingObjectFrom(Resource<T> resource,
+	public <T, ID extends Serializable> T getLazyLoadingObjectFrom(Resource<T> resource,
 			RestEntityInformation<T, ID> entityInfo) {
 		if (resource == null)
 			return null;

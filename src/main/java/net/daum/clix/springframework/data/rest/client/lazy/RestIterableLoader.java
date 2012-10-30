@@ -1,14 +1,19 @@
 package net.daum.clix.springframework.data.rest.client.lazy;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 import net.daum.clix.springframework.data.rest.client.http.RestClientBase;
+import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Iterable implementation for PagingAndSortingRepository#findAll() to load data
@@ -18,38 +23,46 @@ import org.springframework.util.Assert;
  * 
  * @param <T>
  */
-public class RestIterableLoader<T> implements Iterable<T> {
+public class RestIterableLoader<T, ID extends Serializable> implements Iterable<T> {
 
 	private RestClient restClient;
-	
-	private Class<T> domainType;
-	
-	private String nextHref;
-	
-	private List<T> collection;
 
-	public RestIterableLoader(RestClientBase restClient, String href, Class<T> domainType) {
-		Assert.isAssignable(restClient.getClass(), RestClientBase.class);
+	private String nextHref;
+
+	private Collection<Resource<T>> collection;
+
+	private RestEntityInformation<T, ID> entityInfo;
+
+	public RestIterableLoader(RestClientBase restClient, String href, RestEntityInformation<T, ID> entityInfo) {
+		this.entityInfo = entityInfo;
+		Assert.isAssignable(RestClientBase.class, restClient.getClass());
 		Assert.hasText(href);
-		Assert.notNull(domainType);
+		Assert.notNull(entityInfo);
 
 		this.restClient = restClient;
 		this.nextHref = href;
-		this.domainType = domainType;
+		
 
 		loadNext();
 	}
 
-	private void loadNext() {
-		PagedResources<T> res = (PagedResources<T>) ((RestClientBase) restClient).executeGet(nextHref,
-				PagedResources.class, domainType);
-		
-		//TODO add to collection
+	@SuppressWarnings("unchecked")
+	private boolean loadNext() {
+		PagedResources<Resource<T>> res = (PagedResources<Resource<T>>) ((RestClientBase) restClient).executeGet(nextHref,
+				PagedResources.class, entityInfo.getJavaType());
+
 		nextHref = null;
 		for (Link link : res.getLinks()) {
 			if (link.getRel().endsWith(".next"))
-				nextHref = link.getRel();
+				nextHref = link.getHref();
 		}
+
+		collection = res.getContent();
+
+		if (collection == null)
+			collection = new ArrayList<Resource<T>>();
+
+		return StringUtils.hasText(nextHref);
 	}
 
 	public Iterator<T> iterator() {
@@ -57,25 +70,34 @@ public class RestIterableLoader<T> implements Iterable<T> {
 	}
 
 	private class LazyLoadingIterator implements Iterator<T> {
-		
-		int pos;
-		
+
+		Iterator<Resource<T>> iterator;
+
 		public LazyLoadingIterator() {
-			pos = 0;
+			iterator = collection.iterator();
 		}
 
 		public boolean hasNext() {
-			return pos < collection.size();
+			boolean hasNext = iterator.hasNext();
+			if (!hasNext) {
+				hasNext = StringUtils.hasText(nextHref);
+			}
+
+			return hasNext;
 		}
 
 		public T next() {
-//			T object = collection.
-			throw new IllegalAccessError("Iterator<T>#next has not implemented yet!");
+			if (hasNext() && !iterator.hasNext()) {
+				loadNext();
+				iterator = collection.iterator();
+			}
+			
+			Resource<T> resource =iterator.next();
+			return (T) ((RestClientBase) restClient).getLazyLoadingObjectFrom(resource, entityInfo);
 		}
 
 		public void remove() {
-			// TODO Auto-generated method stub
-			throw new IllegalAccessError("Iterator<T>#remove has not implemented yet!");
+			iterator.remove();
 		}
 
 	}

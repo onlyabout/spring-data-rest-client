@@ -37,7 +37,7 @@ public class RestRepositoryQueryExecutor<T, ID extends Serializable> implements 
 
 		String queryName = getQueryName();
 		String queryParam = getQueryParameters(parameters);
-
+		
 		if (List.class.isAssignableFrom(method.getReturnType())) {
 			return restClient.queryForList(queryName + queryParam, entityInformation.getJavaType());
 		}

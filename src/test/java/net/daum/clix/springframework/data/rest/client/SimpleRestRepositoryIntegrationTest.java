@@ -142,8 +142,8 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		assertEquals(2, cnt);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
-	public void findAllThrowsExceptionForPagingAndSortingRepository() {
+	@Test
+	public void findAllForPagingAndSortingRepository() {
 		Iterable<Person> people = personRepository.findAll();
 		
 		assertNotNull(people);
@@ -152,6 +152,7 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		for (Person p : people) {
 			cnt++;
 			assertNotNull(p);
+			assertNotNull(p.getName());
 		}
 		
 		assertEquals(1, cnt);
