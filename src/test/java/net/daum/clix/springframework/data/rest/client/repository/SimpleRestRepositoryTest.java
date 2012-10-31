@@ -1,9 +1,13 @@
 package net.daum.clix.springframework.data.rest.client.repository;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -28,7 +32,7 @@ public class SimpleRestRepositoryTest {
 		Serializable id = 1;
 
 		repository.findOne(id);
-
+		
 //		verify(restClient, times(1)).getForObject(Any, id);
 	}
 

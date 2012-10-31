@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -21,6 +22,7 @@ public class JacksonJsonSerializer implements JsonSerializer {
 	public JacksonJsonSerializer() {
 		this.mapper = new ObjectMapper();
 		this.mapper.setSerializationInclusion(Inclusion.NON_EMPTY);
+		this.mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	}
 
 	public byte[] serialize(Object object) {

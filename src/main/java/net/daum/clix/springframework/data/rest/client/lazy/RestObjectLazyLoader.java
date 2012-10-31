@@ -1,13 +1,11 @@
 package net.daum.clix.springframework.data.rest.client.lazy;
 
-import org.springframework.util.Assert;
-
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformationSupport;
-import net.daum.clix.springframework.data.rest.client.repository.SimpleRestRepository;
-import net.daum.clix.springframework.data.rest.client.util.RestUrlUtil;
 import net.sf.cglib.proxy.LazyLoader;
+
+import org.springframework.util.Assert;
 
 public class RestObjectLazyLoader implements LazyLoader {
 
@@ -28,10 +26,7 @@ public class RestObjectLazyLoader implements LazyLoader {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object loadObject() throws Exception {
 
-		SimpleRestRepository repo = new SimpleRestRepository(
-				(RestEntityInformation) RestEntityInformationSupport.getMetadata(type), restClient);
-
-		return repo.findOne(RestUrlUtil.getIdFrom(href));
+		return restClient.getForObjectForLocation((RestEntityInformation) RestEntityInformationSupport.getMetadata(type), href);
 	}
 
 }

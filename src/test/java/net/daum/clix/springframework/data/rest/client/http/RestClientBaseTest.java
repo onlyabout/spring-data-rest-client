@@ -1,20 +1,9 @@
 package net.daum.clix.springframework.data.rest.client.http;
 
-import java.io.Serializable;
-import java.lang.reflect.Type;
-
-import net.daum.clix.springframework.data.rest.client.http.request.RestRequest;
-
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.data.rest.example.Person;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.ResourceSupport;
 
-@RunWith(MockitoJUnitRunner.class)
+//@RunWith(MockitoJUnitRunner.class)
 public class RestClientBaseTest {
 
 //	@SuppressWarnings({ "rawtypes", "unchecked" })

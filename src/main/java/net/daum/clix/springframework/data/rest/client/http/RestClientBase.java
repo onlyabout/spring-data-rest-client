@@ -14,6 +14,7 @@ import net.daum.clix.springframework.data.rest.client.lazy.RestIterableLoader;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformationSupport;
 import net.daum.clix.springframework.data.rest.client.repository.RestRepositories;
+import net.daum.clix.springframework.data.rest.client.util.RestUrlUtil;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -48,20 +49,27 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T, ID extends Serializable> T getForObject(RestEntityInformation<T, ID> entityInfo, ID id) {
+	public <T, ID extends Serializable> T getForObjectForLocation(RestEntityInformation<T, ID> entityInfo, String url) {
 		refresh();
-
-		String url = urlBuilder.build(entityInfo.getJavaType(), id);
-
+		
 		Resource<T> resource = (Resource<T>) executeGet(url, Resource.class, entityInfo.getJavaType());
 
 		T entity = getLazyLoadingObjectFrom(resource, entityInfo);
 
 		if (entity != null) {
-			entityInfo.setId(entity, id);
+			entityInfo.setId(entity, (ID) RestUrlUtil.getIdFrom(resource.getId().getHref()));
 		}
 
 		return entity;
+	}
+
+
+	public <T, ID extends Serializable> T getForObject(RestEntityInformation<T, ID> entityInfo, ID id) {
+		refresh(); 
+		
+		String url = urlBuilder.build(entityInfo.getJavaType(), id);
+		
+		return getForObjectForLocation(entityInfo, url);
 	}
 
 	@SuppressWarnings("unchecked")

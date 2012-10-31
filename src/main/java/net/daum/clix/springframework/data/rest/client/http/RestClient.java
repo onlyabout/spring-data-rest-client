@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 public interface RestClient {
+	
+	<T, ID extends Serializable> T getForObjectForLocation(RestEntityInformation<T, ID> entityInfo, String url);
 
 	<T, ID extends Serializable> T getForObject(RestEntityInformation<T, ID> domainType, ID id);
 
@@ -35,4 +37,5 @@ public interface RestClient {
 	<K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType);
 	
 	<T> List<T> queryForList(String query, Class<T> type);
+
 }
