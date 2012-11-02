@@ -1,12 +1,17 @@
 package net.daum.clix.springframework.data.rest.client.http;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 import net.daum.clix.springframework.data.rest.client.repository.RestRepositories;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.repository.annotation.RestResource;
 import org.springframework.util.StringUtils;
 
@@ -14,10 +19,12 @@ public class RestUrlBuilder {
 
 	private RestRepositories repositories;
 	private String restServerUrl;
+	private ParameterBuilder pBuilder;
 
 	public RestUrlBuilder(String restServerUrl, RestRepositories repositories) {
 		this.restServerUrl = restServerUrl;
 		this.repositories = repositories;
+		this.pBuilder = new ParameterBuilder();
 	}
 
 	public String build(Class<?> domainClass) {
@@ -50,47 +57,107 @@ public class RestUrlBuilder {
 		return sb.toString();
 	}
 
-	public <T> String buildWithParameters(Class<T> domainClass, Pageable pageable) {
-		if (pageable == null)
-			return build(domainClass);
-
-		String baseUrl = buildWithParameters(domainClass, pageable.getSort());
-
-		StringBuilder sb = new StringBuilder(baseUrl);
-		if (baseUrl.indexOf("?") == -1)
-			sb.append("?page=" + pageable.getPageNumber());
-		else
-			sb.append("&page=" + pageable.getPageNumber());
-		
-		sb.append("&limit=" + pageable.getPageSize());
-
-		return sb.toString();
+	public <T> String buildWithParameters(Class<T> domainClass, Object... parameters) {
+		return build(domainClass) + pBuilder.build(parameters);
 	}
 
-	public <T> String buildQueryUrl(String query, Class<T> domainClass) {
-		return build(domainClass) + "/search/" + query;
+	public String buildQueryUrl(Class<?> domainClass, Method queryMethod, Object... parameters) {
+		return build(domainClass) + "/search/" + getQueryName(queryMethod) + pBuilder.build(queryMethod, parameters);
 	}
 
-	public <T> String buildWithParameters(Class<T> domainClass, Sort sort) {
-		if (sort == null)
-			return build(domainClass);
+	private String getQueryName(Method queryMethod) {
+		String path = queryMethod.getName();
 
-		StringBuilder sb = new StringBuilder(build(domainClass));
-
-		Iterator<Sort.Order> it = sort.iterator();
-		
-		int i = 0;
-		while (it.hasNext()) {
-			Sort.Order order = it.next();
-
-			if (i == 0)
-				sb.append("?sort=" + order.getProperty());
-			else 
-				sb.append("&sort=" + order.getProperty());
-			sb.append("&" + order.getProperty() + ".dir=" + order.getDirection());
+		RestResource ann = queryMethod.getAnnotation(RestResource.class);
+		if (ann != null && StringUtils.hasText(ann.path())) {
+			path = ann.path();
 		}
 
-		return sb.toString();
+		return path;
+	}
+
+	private class ParameterBuilder {
+
+		private String build(Object... parameters) {
+			return build(null, parameters);
+		}
+
+		private String build(Method queryMethod, Object... parameters) {
+			Map<String, String> pMap = new TreeMap<String, String>();
+
+			for (int i = 0; i < parameters.length; i++) {
+				Object parameter = parameters[i];
+
+				if (Pageable.class.isAssignableFrom(parameter.getClass())) {
+					addPageable(pMap, (Pageable) parameter);
+				} else if (Sort.class.isAssignableFrom(parameter.getClass())) {
+					addSort(pMap, (Sort) parameter);
+				} else {
+					if (queryMethod == null)
+						continue;
+
+					Annotation[] anns = queryMethod.getParameterAnnotations()[i];
+
+					for (int j = 0; j < anns.length; j++) {
+						Annotation ann = anns[j];
+						if (ann instanceof Param) {
+
+							Param paramAnn = (Param) ann;
+
+							if (ann != null && StringUtils.hasText(paramAnn.value())) {
+
+								String name = paramAnn.value();
+								String value = String.valueOf(parameter);
+
+								pMap.put(name, value);
+							}
+						}
+					}
+				}
+			}
+
+			return convertToString(pMap);
+		}
+
+		private String convertToString(Map<String, String> pMap) {
+			if (pMap == null || pMap.size() == 0)
+				return "";
+
+			StringBuilder sb = new StringBuilder();
+
+			int i = 0;
+			for (String key : pMap.keySet()) {
+				String sep = ((i++ == 0) ? "?" : "&");
+				sb.append(sep + key + "=" + pMap.get(key));
+			}
+
+			return sb.toString();
+		}
+
+		private void addPageable(Map<String, String> pMap, Pageable pageable) {
+			if (pageable == null)
+				return;
+
+			addSort(pMap, pageable.getSort());
+
+			pMap.put("page", String.valueOf(pageable.getPageNumber()));
+			pMap.put("limit", String.valueOf(pageable.getPageSize()));
+		}
+
+		private void addSort(Map<String, String> pMap, Sort sort) {
+			if (sort == null)
+				return;
+
+			Iterator<Sort.Order> it = sort.iterator();
+
+			while (it.hasNext()) {
+				Sort.Order order = it.next();
+
+				pMap.put("sort", order.getProperty());
+				pMap.put(order.getProperty() + ".dir", order.getDirection().toString());
+			}
+		}
+
 	}
 
 }

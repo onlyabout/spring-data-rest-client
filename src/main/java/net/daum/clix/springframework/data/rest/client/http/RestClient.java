@@ -1,6 +1,7 @@
 package net.daum.clix.springframework.data.rest.client.http;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,6 @@ public interface RestClient {
 
 	<K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType);
 	
-	<T> List<T> queryForList(String query, Class<T> type);
+	<T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters);
 
 }

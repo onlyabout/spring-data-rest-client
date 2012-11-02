@@ -2,6 +2,9 @@ package net.daum.clix.springframework.data.rest.client.http;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+
+import java.lang.reflect.Method;
+
 import net.daum.clix.springframework.data.rest.client.repository.RestRepositories;
 
 import org.junit.Before;
@@ -13,7 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.rest.example.Person;
+import org.springframework.data.rest.example.PersonRepository;
 import org.springframework.data.rest.repository.annotation.RestResource;
+import org.springframework.util.ReflectionUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RestUrlBuilderTest {
@@ -40,7 +45,7 @@ public class RestUrlBuilderTest {
 	public void testBuild() throws Exception {
 		String url = urlBuilder.build(domainClass);
 		assertEquals("http://1.2.3.4/people", url);
-		
+
 		url = urlBuilder.build(domainClass, 1L);
 		assertEquals("http://1.2.3.4/people/1", url);
 	}
@@ -48,18 +53,25 @@ public class RestUrlBuilderTest {
 	@Test
 	public void testBuildWithParameters() throws Exception {
 		String url = urlBuilder.buildWithParameters(domainClass, new PageRequest(1, 10));
-		assertEquals("http://1.2.3.4/people?page=1&limit=10", url);
-		
+		assertEquals("http://1.2.3.4/people?limit=10&page=1", url);
+
 		url = urlBuilder.buildWithParameters(domainClass, new Sort(Direction.DESC, "name"));
-		assertEquals("http://1.2.3.4/people?sort=name&name.dir=DESC", url);
-		
+		assertEquals("http://1.2.3.4/people?name.dir=DESC&sort=name", url);
+
 		url = urlBuilder.buildWithParameters(domainClass, new PageRequest(1, 10, new Sort(Direction.DESC, "name")));
-		assertEquals("http://1.2.3.4/people?sort=name&name.dir=DESC&page=1&limit=10", url);
+		assertEquals("http://1.2.3.4/people?limit=10&name.dir=DESC&page=1&sort=name", url);
 	}
 
 	@Test
 	public void testBuildQueryUrl() throws Exception {
-		String url = urlBuilder.buildQueryUrl("findByName", Person.class);
-		assertEquals("http://1.2.3.4/people/search/findByName", url);
+		Method queryMethod = ReflectionUtils.findMethod(PersonRepository.class, "findByName", String.class);
+
+		String url = urlBuilder.buildQueryUrl(Person.class, queryMethod);
+		assertEquals("http://1.2.3.4/people/search/name", url);
+
+		url = urlBuilder.buildQueryUrl(Person.class, queryMethod, new PageRequest(1, 10), new Sort(Direction.ASC,
+				"name"));
+		assertEquals("http://1.2.3.4/people/search/name?limit=10&name.dir=ASC&page=1&sort=name", url);
 	}
+
 }

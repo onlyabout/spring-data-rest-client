@@ -2,6 +2,7 @@ package net.daum.clix.springframework.data.rest.client.http;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,7 +26,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
@@ -95,17 +95,17 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		executeDelete(url);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <S> S saveForObject(S entity) {
 		refresh();
-		
-		RestEntityInformation entityInfo = (RestEntityInformation) RestEntityInformationSupport.getMetadata(entity.getClass());
+
+		RestEntityInformation entityInfo = (RestEntityInformation) RestEntityInformationSupport.getMetadata(entity
+				.getClass());
 
 		if (entityInfo.isNew(entity)) {
 			String url = urlBuilder.build(entity.getClass());
 			return (S) ProxyCreator.createObject(this, executePost(url, entity), entity.getClass());
-		}
-		else {
+		} else {
 			String url = urlBuilder.build(entity.getClass(), entityInfo.getId(entity));
 			return (S) ProxyCreator.createObject(this, executePut(url, entity), entity.getClass());
 		}
@@ -143,9 +143,10 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 	// TODO : paging 파라메터가 있을 경우에 대한 처리
 	@SuppressWarnings("unchecked")
-	public <T> List<T> queryForList(String query, Class<T> type) {
-		String href = urlBuilder.buildQueryUrl(query, type);
-		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
+	public <T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters) {
+		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
+		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class,
+				queryMethod.getDeclaringClass());
 		return resourcesToIterable(res);
 	}
 
@@ -205,7 +206,8 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		for (Resource<T> r : (Collection<Resource<T>>) resources.getContent()) {
 			T content = r.getContent();
-			RestEntityInformation info = (RestEntityInformation) RestEntityInformationSupport.getMetadata(content.getClass());
+			RestEntityInformation info = (RestEntityInformation) RestEntityInformationSupport.getMetadata(content
+					.getClass());
 			info.setId(content, RestUrlUtil.getIdFrom(r.getId().getHref()));
 			list.add(content);
 		}
@@ -223,7 +225,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		if (entity == null)
 			return null;
-		
+
 		entityInfo.setId(entity, (ID) RestUrlUtil.getIdFrom(resource.getId().getHref()));
 
 		for (Link link : resource.getLinks()) {
@@ -260,7 +262,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	 *         Returned string can be null if request failed.
 	 */
 	protected abstract <S> String executePost(String url, S entity);
-	
+
 	/**
 	 * 
 	 * @param url
