@@ -1,8 +1,10 @@
 package net.daum.clix.springframework.data.rest.client.http;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -107,8 +109,13 @@ public class RestUrlBuilder {
 							if (ann != null && StringUtils.hasText(paramAnn.value())) {
 
 								String name = paramAnn.value();
-								String value = String.valueOf(parameter);
-
+								String value = null;
+								try {
+									value = URLEncoder.encode(String.valueOf(parameter), "UTF-8");
+								} catch (UnsupportedEncodingException e) {
+									throw new IllegalArgumentException("Query method's parameter must be UTF-8 encoded");
+								}
+								
 								pMap.put(name, value);
 							}
 						}

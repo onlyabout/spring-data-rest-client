@@ -15,6 +15,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.example.Person;
 import org.springframework.data.rest.example.PersonRepository;
 import org.springframework.data.rest.repository.annotation.RestResource;

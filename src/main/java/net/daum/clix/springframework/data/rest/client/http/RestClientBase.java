@@ -141,7 +141,6 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		}
 	}
 
-	// TODO : paging 파라메터가 있을 경우에 대한 처리
 	@SuppressWarnings("unchecked")
 	public <T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters) {
 		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);

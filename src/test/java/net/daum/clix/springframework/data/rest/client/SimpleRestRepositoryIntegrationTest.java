@@ -6,6 +6,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static org.springframework.data.rest.example.builder.AddressBuilder.*;
+import static org.springframework.data.rest.example.builder.ProfileBuilder.*;
+import static org.springframework.data.rest.example.builder.PersonBuilder.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -51,37 +55,32 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 
 	@Before
 	public void saveTestForPreparingData() {
-		List<Address> addresses = new ArrayList<Address>();
-		Map<String, Profile> profiles = new HashMap<String, Profile>();
 
-		address = addressRepository.save(new Address(new String[] { "line1", "line2" }, "city", "province",
-				"postalCode"));
-		address2 = addressRepository.save(new Address(new String[] { "line1_2", "line2_2" }, "city2", "province2",
-				"postalCode2"));
-		profile = profileRepository.save(new Profile("type", "url"));
-		profile2 = profileRepository.save(new Profile("type2", "url2"));
+		Person person = aPerson().withAddresses(anAddress(), anAddress())
+				.withProfiles("key1", aProfile(), "key2", aProfile()).build();
 
-		addresses.add(address);
-		addresses.add(address2);
-		profiles.put("name", profile);
-		profiles.put("name2", profile2);
+		// cascade save is not supported yet!
+		address = addressRepository.save(person.getAddresses().get(0));
+		address2 = addressRepository.save(person.getAddresses().get(1));
+		person.getAddresses().set(0, address);
+		person.getAddresses().set(1, address2);
 
-		person = personRepository.save(new Person("name", addresses, profiles));
+		profile = profileRepository.save(person.getProfiles().get("key1"));
+		profile2 = profileRepository.save(person.getProfiles().get("key2"));
+		person.getProfiles().put("key1", profile);
+		person.getProfiles().put("key2", profile2);
+
+		this.person = personRepository.save(person);
 	}
 
 	@After
 	public void deletePreparedData() {
-//		personRepository.delete(person);
-//		addressRepository.delete(address);
-//		addressRepository.delete(address2);
-//		profileRepository.delete(profile);
-//		profileRepository.delete(profile2);
 		for (Person a : personRepository.findAll())
 			personRepository.delete(a);
-		
+
 		for (Address a : addressRepository.findAll())
 			addressRepository.delete(a);
-		
+
 		for (Profile a : profileRepository.findAll())
 			profileRepository.delete(a);
 	}
@@ -90,22 +89,25 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 	public void findOne() {
 		Person person = personRepository.findOne(this.person.getId());
 		assertNotNull(person);
-		assertEquals("name", person.getName());
+		assertEquals(this.person.getName(), person.getName());
 
 		assertNotNull(person.getAddresses());
 		assertEquals(2, person.getAddresses().size());
 
-		assertNotNull(person.getProfiles());
-		assertEquals(2, person.getProfiles().size());
-		
-		// TODO: Is this a bug from spring data rest exporter?? I put a profile with "name" as a key first.
-		assertEquals("url", person.getProfiles().get("profiles").getUrl());
-		assertEquals("type", person.getProfiles().get("profiles").getType());
-//		assertEquals("url", person.getProfiles().get("name").getUrl());
-//		assertEquals("type", person.getProfiles().get("name").getType());
-		
-		assertEquals("url2", person.getProfiles().get("name2").getUrl());
-		assertEquals("type2", person.getProfiles().get("name2").getType());
+		Map<String, Profile> profiles = person.getProfiles();
+		assertNotNull(profiles);
+		assertEquals(2, profiles.size());
+
+		// TODO: Is this a bug from spring data rest exporter?? I put a profile
+		// with "name" as a key first.
+		Map<String, Profile> expectedProfiles = this.person.getProfiles();
+		assertEquals(expectedProfiles.get("key1").getUrl(), profiles.get("key1").getUrl());
+		assertEquals(expectedProfiles.get("key1").getType(), profiles.get("key1").getType());
+		// assertEquals("url", person.getProfiles().get("name").getUrl());
+		// assertEquals("type", person.getProfiles().get("name").getType());
+
+//		assertEquals(expectedProfiles.get("key2").getUrl(), profiles.get("profiles").getUrl());
+//		assertEquals(expectedProfiles.get("key2").getType(), profiles.get("profiles").getType());
 	}
 
 	@Test
@@ -153,16 +155,16 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 	@Test
 	public void findAllForPagingAndSortingRepository() {
 		Iterable<Person> people = personRepository.findAll();
-		
+
 		assertNotNull(people);
-		
+
 		int cnt = 0;
 		for (Person p : people) {
 			cnt++;
 			assertNotNull(p);
 			assertNotNull(p.getName());
 		}
-		
+
 		assertEquals(1, cnt);
 	}
 
@@ -241,36 +243,36 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		personRepository.delete(person3);
 		personRepository.delete(person4);
 	}
-	
+
 	@Test
 	public void queryMethod() {
-		List<Person> list = personRepository.findByName("name");
+		List<Person> list = personRepository.findByName("Jongjin Han");
 		assertNotNull(list);
 		assertEquals(1, list.size());
-		
+
 		Person person = list.get(0);
 		assertNotNull(person);
-		assertEquals("name", person.getName());
+		assertEquals("Jongjin Han", person.getName());
 	}
-	
+
 	@Test
 	public void update() {
 		Person entity = personRepository.findOne(person.getId());
 		assertNotNull(entity);
 		assertNotNull(entity.getId());
-		
+
 		String newName = "newName";
 		entity.setName(newName);
 		entity.setAddresses(null);
 		entity.setProfiles(null);
 		Person saved = personRepository.save(entity);
-		
+
 		assertNotNull(saved);
 		assertEquals(newName, saved.getName());
 		assertEquals(newName, personRepository.findOne(person.getId()).getName());
 	}
 
-	// TODO @Test -- Save method tested by @Before 
+	// TODO @Test -- Save method tested by @Before
 	public void saveCascade() {
 
 		Address addr = new Address(new String[] { "line1", "line2" }, "city", "province", "postalCode");
