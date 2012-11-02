@@ -244,6 +244,23 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		assertNotNull(person);
 		assertEquals("name", person.getName());
 	}
+	
+	@Test
+	public void update() {
+		Person entity = personRepository.findOne(person.getId());
+		assertNotNull(entity);
+		assertNotNull(entity.getId());
+		
+		String newName = "newName";
+		entity.setName(newName);
+		entity.setAddresses(null);
+		entity.setProfiles(null);
+		Person saved = personRepository.save(entity);
+		
+		assertNotNull(saved);
+		assertEquals(newName, saved.getName());
+		assertEquals(newName, personRepository.findOne(person.getId()).getName());
+	}
 
 	// TODO @Test -- Save method tested by @Before 
 	public void saveCascade() {

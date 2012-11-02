@@ -29,9 +29,8 @@ public class RestUrlBuilder {
 	}
 
 	private String getResourcePathProperly(Class<?> domainClass) {
-		Class<?> repoClass = repositories.getRepositoryInformationFor(domainClass).getRepositoryInterface();
-		String resourcePath = StringUtils.uncapitalize(repoClass.getSimpleName().replaceAll("Repository", ""));
-		RestResource resourceAnno = repoClass.getAnnotation(RestResource.class);
+		String resourcePath = repositories.getRepositoryNameFor(domainClass);
+		RestResource resourceAnno = repositories.getRestResourceAnnotationFor(domainClass);
 		if (null != resourceAnno) {
 			if (StringUtils.hasText(resourceAnno.path())) {
 				resourcePath = resourceAnno.path();
@@ -55,14 +54,19 @@ public class RestUrlBuilder {
 		if (pageable == null)
 			return build(domainClass);
 
-		StringBuilder sb = new StringBuilder(buildWithParameters(domainClass, pageable.getSort()));
+		String baseUrl = buildWithParameters(domainClass, pageable.getSort());
+
+		StringBuilder sb = new StringBuilder(baseUrl);
+		if (baseUrl.indexOf("?") == -1)
+			sb.append("?page=" + pageable.getPageNumber());
+		else
+			sb.append("&page=" + pageable.getPageNumber());
 		
-		sb.append("&page=" + pageable.getPageNumber());
 		sb.append("&limit=" + pageable.getPageSize());
 
 		return sb.toString();
 	}
-	
+
 	public <T> String buildQueryUrl(String query, Class<T> domainClass) {
 		return build(domainClass) + "/search/" + query;
 	}
@@ -71,18 +75,22 @@ public class RestUrlBuilder {
 		if (sort == null)
 			return build(domainClass);
 
-		StringBuilder sb = new StringBuilder("?");
+		StringBuilder sb = new StringBuilder(build(domainClass));
 
 		Iterator<Sort.Order> it = sort.iterator();
-
+		
+		int i = 0;
 		while (it.hasNext()) {
 			Sort.Order order = it.next();
 
-			sb.append("&sort=" + order.getProperty());
+			if (i == 0)
+				sb.append("?sort=" + order.getProperty());
+			else 
+				sb.append("&sort=" + order.getProperty());
 			sb.append("&" + order.getProperty() + ".dir=" + order.getDirection());
 		}
 
-		return build(domainClass) + sb.toString();
+		return sb.toString();
 	}
 
 }

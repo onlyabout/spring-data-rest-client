@@ -37,6 +37,12 @@ public class SimpleRestRepository<T, ID extends Serializable> implements RestRep
 		return restClient.getForObject(entityInformation, id);
 	}
 
+	/**
+	 * Save the given entity by using http post or put(when a field with @Id appeared and is not null) method.
+	 * 
+	 * @param entity Entity to save
+	 * @return The saved entity(will be lazily loaded). Can be null if request failed.
+	 */
 	public <S extends T> S save(S entity) {
 		return restClient.saveForObject(entity);
 	}

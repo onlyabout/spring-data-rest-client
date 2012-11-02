@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.util.StringUtils;
+
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 import net.sf.cglib.proxy.Enhancer;
 
@@ -19,6 +21,9 @@ import net.sf.cglib.proxy.Enhancer;
 public class ProxyCreator {
 	
 	public static Object createObject(RestClient restClient, String href, Class<?> type) {
+		if (!StringUtils.hasText(href))
+			return null;
+		
 		return Enhancer.create(type, new RestObjectLazyLoader(restClient, type, href));
 	}
 	

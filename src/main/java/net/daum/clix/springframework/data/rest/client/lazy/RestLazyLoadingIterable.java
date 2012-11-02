@@ -23,7 +23,7 @@ import org.springframework.util.StringUtils;
  * 
  * @param <T>
  */
-public class RestIterableLoader<T, ID extends Serializable> implements Iterable<T> {
+public class RestLazyLoadingIterable<T, ID extends Serializable> implements Iterable<T> {
 
 	private RestClient restClient;
 
@@ -33,7 +33,7 @@ public class RestIterableLoader<T, ID extends Serializable> implements Iterable<
 
 	private RestEntityInformation<T, ID> entityInfo;
 
-	public RestIterableLoader(RestClientBase restClient, String href, RestEntityInformation<T, ID> entityInfo) {
+	public RestLazyLoadingIterable(RestClientBase restClient, String href, RestEntityInformation<T, ID> entityInfo) {
 		this.entityInfo = entityInfo;
 		Assert.isAssignable(RestClientBase.class, restClient.getClass());
 		Assert.hasText(href);
@@ -41,15 +41,14 @@ public class RestIterableLoader<T, ID extends Serializable> implements Iterable<
 
 		this.restClient = restClient;
 		this.nextHref = href;
-		
 
 		loadNext();
 	}
 
 	@SuppressWarnings("unchecked")
 	private boolean loadNext() {
-		PagedResources<Resource<T>> res = (PagedResources<Resource<T>>) ((RestClientBase) restClient).executeGet(nextHref,
-				PagedResources.class, entityInfo.getJavaType());
+		PagedResources<Resource<T>> res = (PagedResources<Resource<T>>) ((RestClientBase) restClient).executeGet(
+				nextHref, PagedResources.class, entityInfo.getJavaType());
 
 		nextHref = null;
 		for (Link link : res.getLinks()) {
@@ -91,8 +90,8 @@ public class RestIterableLoader<T, ID extends Serializable> implements Iterable<
 				loadNext();
 				iterator = collection.iterator();
 			}
-			
-			Resource<T> resource =iterator.next();
+
+			Resource<T> resource = iterator.next();
 			return (T) ((RestClientBase) restClient).getLazyLoadingObjectFrom(resource, entityInfo);
 		}
 

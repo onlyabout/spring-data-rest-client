@@ -31,32 +31,28 @@ import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryFactoryInformation;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.data.rest.repository.annotation.RestResource;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
- * Wrapper class to access repository instances obtained from a {@link ListableBeanFactory}.
+ * Wrapper class to access repository instances obtained from a
+ * {@link ListableBeanFactory}.
  * 
  * @author Oliver Gierke
  */
 public class RestRepositories implements Iterable<Class<?>> {
 
-	static final RestRepositories NONE = new RestRepositories();
-
 	private final Map<Class<?>, RepositoryFactoryInformation<Object, Serializable>> domainClassToBeanName = new HashMap<Class<?>, RepositoryFactoryInformation<Object, Serializable>>();
 	private final Map<RepositoryFactoryInformation<Object, Serializable>, CrudRepository<Object, Serializable>> repositories = new HashMap<RepositoryFactoryInformation<Object, Serializable>, CrudRepository<Object, Serializable>>();
 
 	/**
-	 * Constructor to create the {@link #NONE} instance.
-	 */
-	private RestRepositories() {
-
-	}
-
-	/**
-	 * Creates a new {@link RestRepositories} instance by looking up the repository instances and meta information from the
-	 * given {@link ListableBeanFactory}.
+	 * Creates a new {@link RestRepositories} instance by looking up the
+	 * repository instances and meta information from the given
+	 * {@link ListableBeanFactory}.
 	 * 
-	 * @param factory must not be {@literal null}.
+	 * @param factory
+	 *            must not be {@literal null}.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public RestRepositories(ListableBeanFactory factory) {
@@ -73,8 +69,8 @@ public class RestRepositories implements Iterable<Class<?>> {
 
 			if (CrudRepository.class.isAssignableFrom(repositoryInterface)) {
 				Class<CrudRepository<Object, Serializable>> objectType = repositoryInterface;
-				CrudRepository<Object, Serializable> repository = BeanFactoryUtils.beanOfTypeIncludingAncestors(factory,
-						objectType);
+				CrudRepository<Object, Serializable> repository = BeanFactoryUtils.beanOfTypeIncludingAncestors(
+						factory, objectType);
 
 				this.domainClassToBeanName.put(information.getDomainType(), info);
 				this.repositories.put(info, repository);
@@ -83,9 +79,11 @@ public class RestRepositories implements Iterable<Class<?>> {
 	}
 
 	/**
-	 * Returns whether we have a repository instance registered to manage instances of the given domain class.
+	 * Returns whether we have a repository instance registered to manage
+	 * instances of the given domain class.
 	 * 
-	 * @param domainClass must not be {@literal null}.
+	 * @param domainClass
+	 *            must not be {@literal null}.
 	 * @return
 	 */
 	public boolean hasRepositoryFor(Class<?> domainClass) {
@@ -95,7 +93,8 @@ public class RestRepositories implements Iterable<Class<?>> {
 	/**
 	 * Returns the repository managing the given domain class.
 	 * 
-	 * @param domainClass must not be {@literal null}.
+	 * @param domainClass
+	 *            must not be {@literal null}.
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -106,7 +105,8 @@ public class RestRepositories implements Iterable<Class<?>> {
 	/**
 	 * Returns the {@link EntityInformation} for the given domain class.
 	 * 
-	 * @param domainClass must not be {@literal null}.
+	 * @param domainClass
+	 *            must not be {@literal null}.
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -119,9 +119,11 @@ public class RestRepositories implements Iterable<Class<?>> {
 	/**
 	 * Returns the {@link EntityInformation} for the given domain class.
 	 * 
-	 * @param domainClass must not be {@literal null}.
-	 * @return the {@link EntityInformation} for the given domain class or {@literal null} if no repository registered for
-	 *         this domain class.
+	 * @param domainClass
+	 *            must not be {@literal null}.
+	 * @return the {@link EntityInformation} for the given domain class or
+	 *         {@literal null} if no repository registered for this domain
+	 *         class.
 	 */
 	public RepositoryInformation getRepositoryInformationFor(Class<?> domainClass) {
 
@@ -130,9 +132,44 @@ public class RestRepositories implements Iterable<Class<?>> {
 	}
 
 	/**
-	 * Returns the {@link QueryMethod}s contained in the repository managing the given domain class.
+	 * Returns the {@link Repository} class interface for the given domain
+	 * class. Simply delegates to {@RepositoryInformation
+	 * }
 	 * 
-	 * @param domainClass must not be {@literal null}.
+	 * @param domainCall
+	 *            must not be {@literal null}.
+	 * @return
+	 */
+	public Class<?> getRepositoryInterfaceFor(Class<?> domainClass) {
+		RepositoryInformation repositoryInformation = getRepositoryInformationFor(domainClass);
+		return repositoryInformation == null ? null : repositoryInformation.getRepositoryInterface();
+	}
+
+	/**
+	 * Returns the {@link RestResource} for the given domain class's repository.
+	 * 
+	 * @param domainCall
+	 *            must not be {@literal null}.
+	 * @return the {@link RestResource} for the given domain class or
+	 *         {@literal null} if no @RestResource presents.
+	 */
+	public RestResource getRestResourceAnnotationFor(Class<?> domainClass) {
+		Class<?> repositoryInterface = getRepositoryInterfaceFor(domainClass);
+		return repositoryInterface == null ? null : repositoryInterface.getAnnotation(RestResource.class);
+	}
+
+	public String getRepositoryNameFor(Class<?> domainClass) {
+		Class<?> repositoryInterface = getRepositoryInterfaceFor(domainClass);
+		return repositoryInterface == null ? null : StringUtils.uncapitalize(repositoryInterface.getSimpleName()
+				.replaceAll("Repository", ""));
+	}
+
+	/**
+	 * /** Returns the {@link QueryMethod}s contained in the repository managing
+	 * the given domain class.
+	 * 
+	 * @param domainClass
+	 *            must not be {@literal null}.
 	 * @return
 	 */
 	public List<QueryMethod> getQueryMethodsFor(Class<?> domainClass) {
@@ -154,11 +191,13 @@ public class RestRepositories implements Iterable<Class<?>> {
 		return null;
 	}
 
-	/* 
+	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Iterable#iterator()
 	 */
 	public Iterator<Class<?>> iterator() {
 		return domainClassToBeanName.keySet().iterator();
 	}
+
 }

@@ -3,8 +3,6 @@ package net.daum.clix.springframework.data.rest.client.query;
 import java.lang.reflect.Method;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
-import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
-import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformationSupport;
 
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -19,10 +17,9 @@ public class RestQueryLookupStrategy implements QueryLookupStrategy {
 		this.restClient = restClient;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
 	public final RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, NamedQueries namedQueries) {
-		return new RestRepositoryQueryExecutor(restClient, method, metadata,
-				(RestEntityInformation) RestEntityInformationSupport.getMetadata(metadata.getDomainType()));
+		return new RestRepositoryQueryExecutor(restClient, method, metadata);
 	}
 
 }

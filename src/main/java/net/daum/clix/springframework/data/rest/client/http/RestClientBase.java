@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.daum.clix.springframework.data.rest.client.lazy.ProxyCreator;
-import net.daum.clix.springframework.data.rest.client.lazy.RestIterableLoader;
+import net.daum.clix.springframework.data.rest.client.lazy.RestLazyLoadingIterable;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformationSupport;
 import net.daum.clix.springframework.data.rest.client.repository.RestRepositories;
@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
@@ -51,24 +52,19 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	@SuppressWarnings("unchecked")
 	public <T, ID extends Serializable> T getForObjectForLocation(RestEntityInformation<T, ID> entityInfo, String url) {
 		refresh();
-		
+
 		Resource<T> resource = (Resource<T>) executeGet(url, Resource.class, entityInfo.getJavaType());
 
 		T entity = getLazyLoadingObjectFrom(resource, entityInfo);
 
-		if (entity != null) {
-			entityInfo.setId(entity, (ID) RestUrlUtil.getIdFrom(resource.getId().getHref()));
-		}
-
 		return entity;
 	}
 
-
 	public <T, ID extends Serializable> T getForObject(RestEntityInformation<T, ID> entityInfo, ID id) {
-		refresh(); 
-		
+		refresh();
+
 		String url = urlBuilder.build(entityInfo.getJavaType(), id);
-		
+
 		return getForObjectForLocation(entityInfo, url);
 	}
 
@@ -102,31 +98,17 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	@SuppressWarnings("unchecked")
 	public <S> S saveForObject(S entity) {
 		refresh();
+		
+		RestEntityInformation entityInfo = (RestEntityInformation) RestEntityInformationSupport.getMetadata(entity.getClass());
 
-		String url = urlBuilder.build(entity.getClass());
-
-		// for (Field field : entity.getClass().getDeclaredFields()) {
-		// if (field.isAnnotationPresent(OneToOne.class)) {
-		// field.setAccessible(true);
-		// Object o = ReflectionUtils.getField(field, entity);
-		//
-		// Object saved = saveForObject(o);
-		// ReflectionUtils.setField(field, entity, saved);
-
-		// } else if (field.isAnnotationPresent(OneToMany.class)) {
-		// field.setAccessible(true);
-		// Object o = ReflectionUtils.getField(field, entity);
-
-		// if (!Iterable.class.isAssignableFrom(o.getClass())) {
-
-		// }
-
-		// Object saved = saveForObjects((Iterable<S>) o);
-		// ReflectionUtils.setField(field, entity, saved);
-		// }
-		// }
-
-		return (S) ProxyCreator.createObject(this, executePost(url, entity), entity.getClass());
+		if (entityInfo.isNew(entity)) {
+			String url = urlBuilder.build(entity.getClass());
+			return (S) ProxyCreator.createObject(this, executePost(url, entity), entity.getClass());
+		}
+		else {
+			String url = urlBuilder.build(entity.getClass(), entityInfo.getId(entity));
+			return (S) ProxyCreator.createObject(this, executePut(url, entity), entity.getClass());
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -144,8 +126,8 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		String url = urlBuilder.build(entityInfo.getJavaType());
 		if (isPageableRepository(entityInfo.getJavaType()))
-			return new RestIterableLoader(this, url, entityInfo);
-		
+			return new RestLazyLoadingIterable(this, url, entityInfo);
+
 		return getForList(url, entityInfo.getJavaType());
 	}
 
@@ -158,7 +140,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 			return resourcesToIterable(res);
 		}
 	}
-	
+
 	// TODO : paging 파라메터가 있을 경우에 대한 처리
 	@SuppressWarnings("unchecked")
 	public <T> List<T> queryForList(String query, Class<T> type) {
@@ -175,7 +157,8 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		Map<K, V> lazyObjectsMap = new HashMap<K, V>();
 
 		for (K key : content.keySet()) {
-			V value = (V) getLazyLoadingObjectFrom(content.get(key), (RestEntityInformation) RestEntityInformationSupport.getMetadata(valueType));
+			V value = (V) getLazyLoadingObjectFrom(content.get(key),
+					(RestEntityInformation) RestEntityInformationSupport.getMetadata(valueType));
 			lazyObjectsMap.put(key, value);
 		}
 
@@ -216,16 +199,21 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		return PagingAndSortingRepository.class.isAssignableFrom(repositories.getRepositoryFor(domainClass).getClass());
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private <T, ID extends Serializable> List<T> resourcesToIterable(Resources<Resource<T>> resources) {
 		List<T> list = new ArrayList<T>();
 
 		for (Resource<T> r : (Collection<Resource<T>>) resources.getContent()) {
-			list.add(r.getContent());
+			T content = r.getContent();
+			RestEntityInformation info = (RestEntityInformation) RestEntityInformationSupport.getMetadata(content.getClass());
+			info.setId(content, RestUrlUtil.getIdFrom(r.getId().getHref()));
+			list.add(content);
 		}
 
 		return list;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T, ID extends Serializable> T getLazyLoadingObjectFrom(Resource<T> resource,
 			RestEntityInformation<T, ID> entityInfo) {
 		if (resource == null)
@@ -235,17 +223,20 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		if (entity == null)
 			return null;
+		
+		entityInfo.setId(entity, (ID) RestUrlUtil.getIdFrom(resource.getId().getHref()));
 
 		for (Link link : resource.getLinks()) {
 			if (Link.REL_SELF.equals(link.getRel()))
 				continue;
 
 			Field field = entityInfo.findFieldByRel(link.getRel());
-			
-			// A link rel like people.Person.profiles.Profile should not be found.
+
+			// A link rel like people.Person.profiles.Profile should not be
+			// found.
 			if (field == null)
 				continue;
-			
+
 			Object lazyObjecy = ProxyCreator.create(this, link.getHref(), field);
 			ReflectionUtils.makeAccessible(field);
 			ReflectionUtils.setField(field, entity, lazyObjecy);
@@ -269,6 +260,15 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	 *         Returned string can be null if request failed.
 	 */
 	protected abstract <S> String executePost(String url, S entity);
+	
+	/**
+	 * 
+	 * @param url
+	 * @param entity
+	 * @return Returns a href for saved entity from response header "Location".
+	 *         Returned string can be null if request failed.
+	 */
+	protected abstract <S> String executePut(String url, S entity);
 
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
@@ -277,11 +277,11 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	private void refresh() {
 		Assert.notNull(applicationContext);
 
-		if (null != repositories)
-			return;
+		if (null == repositories)
+			repositories = new RestRepositories(applicationContext);
 
-		repositories = new RestRepositories(applicationContext);
-		urlBuilder = new RestUrlBuilder(restServerUrl, repositories);
+		if (null == urlBuilder)
+			urlBuilder = new RestUrlBuilder(restServerUrl, repositories);
 	}
 
 }

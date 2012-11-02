@@ -10,6 +10,7 @@ import java.util.Map;
 import net.daum.clix.springframework.data.rest.client.json.JacksonJsonSerializer;
 import net.daum.clix.springframework.data.rest.client.json.JsonSerializer;
 
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
@@ -26,6 +28,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceSupport;
+import org.springframework.util.StringUtils;
 
 public class CommonsRestClient extends RestClientBase {
 
@@ -40,20 +43,21 @@ public class CommonsRestClient extends RestClientBase {
 	public CommonsRestClient(String restServerUrl) {
 		super(restServerUrl);
 
-//		SchemeRegistry schemeRegistry = new SchemeRegistry();
-//		schemeRegistry.register(
-//		         new Scheme("http", 8080, PlainSocketFactory.getSocketFactory()));
-//		schemeRegistry.register(
-//		         new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
-//	    PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
-//	    
-//	    cm.setMaxTotal(100);
-//	    // Increase default max connection per route to 20
-//	    cm.setDefaultMaxPerRoute(20);
-//	    // Increase max connections for localhost:80 to 50
-//	    HttpHost localhost = new HttpHost("locahost", 8080);
-//	    cm.setMaxPerRoute(new HttpRoute(localhost), 50);
-	    
+		// SchemeRegistry schemeRegistry = new SchemeRegistry();
+		// schemeRegistry.register(
+		// new Scheme("http", 8080, PlainSocketFactory.getSocketFactory()));
+		// schemeRegistry.register(
+		// new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
+		// PoolingClientConnectionManager cm = new
+		// PoolingClientConnectionManager(schemeRegistry);
+		//
+		// cm.setMaxTotal(100);
+		// // Increase default max connection per route to 20
+		// cm.setDefaultMaxPerRoute(20);
+		// // Increase max connections for localhost:80 to 50
+		// HttpHost localhost = new HttpHost("locahost", 8080);
+		// cm.setMaxPerRoute(new HttpRoute(localhost), 50);
+
 		this.client = new DefaultHttpClient();
 		this.defaultHeader = new BasicHeader("accept", "application/json");
 
@@ -67,15 +71,16 @@ public class CommonsRestClient extends RestClientBase {
 
 		return (ResourceSupport) jsonSerializer.deserialize(getBody(res), resourceType, objectType);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <K, V> Resource<Map<K, Resource<V>>> executeGetForMap(String url, Type resourceType, Type keyType, Type valueType) {
+	protected <K, V> Resource<Map<K, Resource<V>>> executeGetForMap(String url, Type resourceType, Type keyType,
+			Type valueType) {
 		HttpGet req = (HttpGet) setDefaultHeader(new HttpGet(url));
 		HttpResponse res = execute(req);
 
-		return (Resource<Map<K, Resource<V>>>) jsonSerializer.deserializeMapResource(getBody(res), resourceType, keyType,
-				valueType);
+		return (Resource<Map<K, Resource<V>>>) jsonSerializer.deserializeMapResource(getBody(res), resourceType,
+				keyType, valueType);
 	}
 
 	@Override
@@ -90,27 +95,42 @@ public class CommonsRestClient extends RestClientBase {
 		if (statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR)
 			throw new UnsupportedOperationException(req.getMethod() + " failed for " + url + "\treason : "
 					+ res.getStatusLine().getReasonPhrase());
-
 	}
 
 	@Override
 	protected <S> String executePost(String url, S entity) {
+		HttpPost req = (HttpPost) setDefaultHeader(new HttpPost(url));
+		return executePutOrPostRequest(req, entity);
+	}
 
+	@Override
+	protected <S> String executePut(String url, S entity) {
+		if (url.indexOf("?") != -1)
+			url += "&returnBody=true";
+		else
+			url += "?returnBody=true";
+
+		HttpPut req = (HttpPut) setDefaultHeader(new HttpPut(url));
+		return executePutOrPostRequest(req, entity);
+	}
+
+	private <S> String executePutOrPostRequest(HttpEntityEnclosingRequest httpRequest, S entity) {
 		byte[] body = jsonSerializer.serialize(entity);
 
 		ByteArrayEntity httpEntity = new ByteArrayEntity(body);
-
 		httpEntity.setContentEncoding(Charset.forName("UTF-8").name());
 		httpEntity.setContentType("application/json");
 
-		HttpPost req = (HttpPost) setDefaultHeader(new HttpPost(url));
-		req.setEntity(httpEntity);
+		httpRequest.setEntity(httpEntity);
 
-		HttpResponse res = execute(req);
+		HttpResponse res = execute((HttpUriRequest) httpRequest);
 		String savedLocation = null;
 		if (res.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED)
 			savedLocation = res.getHeaders("Location")[0].getValue();
 
+		if (!StringUtils.hasText(savedLocation) && res.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
+			savedLocation = ((HttpUriRequest)httpRequest).getURI().toString();
+			
 		return savedLocation;
 	}
 
@@ -161,6 +181,5 @@ public class CommonsRestClient extends RestClientBase {
 		httpMessage.setHeader(defaultHeader);
 		return httpMessage;
 	}
-
 
 }

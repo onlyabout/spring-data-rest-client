@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
-import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Param;
@@ -23,23 +22,19 @@ public class RestRepositoryQueryExecutor<T, ID extends Serializable> implements 
 
 	private RepositoryMetadata metadata;
 
-	private RestEntityInformation<T, ID> entityInformation;
-
-	public RestRepositoryQueryExecutor(RestClient restClient, Method method, RepositoryMetadata metadata,
-			RestEntityInformation<T, ID> entityInformation) {
+	public RestRepositoryQueryExecutor(RestClient restClient, Method method, RepositoryMetadata metadata) {
 		this.restClient = restClient;
 		this.method = method;
 		this.metadata = metadata;
-		this.entityInformation = entityInformation;
 	}
 
 	public Object execute(Object[] parameters) {
 
 		String queryName = getQueryName();
 		String queryParam = getQueryParameters(parameters);
-		
+
 		if (List.class.isAssignableFrom(method.getReturnType())) {
-			return restClient.queryForList(queryName + queryParam, entityInformation.getJavaType());
+			return restClient.queryForList(queryName + queryParam, metadata.getDomainType());
 		}
 
 		throw new IllegalAccessError("RestRepositoryQuery#execute for return type " + method.getReturnType()

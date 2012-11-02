@@ -4,7 +4,7 @@
 
 	<groupId>net.daum.clix</groupId>
 	<artifactId>spring-data-rest-cli</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 	<name>Spring Data Web Exporter Client</name>
 	<description>Client library for the Spring Data Web Exporter</description>
 
