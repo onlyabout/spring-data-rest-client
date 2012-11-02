@@ -20,6 +20,7 @@ public class RestRepositoryFactory extends RepositoryFactorySupport {
 	private RestClient restClient;
 
 	public RestRepositoryFactory(RestClient restClient) {
+		super();
 		this.restClient = restClient;
 	}
 

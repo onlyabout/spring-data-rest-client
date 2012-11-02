@@ -10,6 +10,7 @@ import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInforma
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 /**
  * Default implementation of the
@@ -23,7 +24,7 @@ import org.springframework.data.domain.Sort;
  *            the type of the entity's identifier
  */
 @org.springframework.stereotype.Repository
-public class SimpleRestRepository<T, ID extends Serializable> implements RestRepository<T, ID> {
+public class SimpleRestRepository<T, ID extends Serializable> implements PagingAndSortingRepository<T, ID> {
 
 	private RestClient restClient;
 	private RestEntityInformation<T, ID> entityInformation;

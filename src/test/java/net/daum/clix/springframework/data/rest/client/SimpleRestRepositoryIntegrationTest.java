@@ -71,11 +71,19 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 
 	@After
 	public void deletePreparedData() {
-		personRepository.delete(person);
-		addressRepository.delete(address);
-		addressRepository.delete(address2);
-		profileRepository.delete(profile);
-		profileRepository.delete(profile2);
+//		personRepository.delete(person);
+//		addressRepository.delete(address);
+//		addressRepository.delete(address2);
+//		profileRepository.delete(profile);
+//		profileRepository.delete(profile2);
+		for (Person a : personRepository.findAll())
+			personRepository.delete(a);
+		
+		for (Address a : addressRepository.findAll())
+			addressRepository.delete(a);
+		
+		for (Profile a : profileRepository.findAll())
+			profileRepository.delete(a);
 	}
 
 	@Test

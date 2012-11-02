@@ -35,7 +35,7 @@ public class RestRepositoryQueryExecutor<T, ID extends Serializable> implements 
 	}
 
 	public QueryMethod getQueryMethod() {
-		return new RestQueryMethod(method, metadata);
+		return new QueryMethod(method, metadata);
 	}
 
 }
