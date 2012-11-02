@@ -146,7 +146,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	public <T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters) {
 		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
 		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class,
-				queryMethod.getDeclaringClass());
+				type);
 		return resourcesToIterable(res);
 	}
 
