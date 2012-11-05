@@ -98,18 +98,4 @@
 		</plugins>
 	</build>
 
-	<distributionManagement>
-		<repository>
-			<id>daum-sapd</id>
-			<name>Daum SAPD Repository</name>
-			<url>http://maven.daumcorp.com/content/repositories/daum-sapd</url>
-		</repository>
-
-		<snapshotRepository>
-			<id>daum-sapd-snapshots</id>
-			<name>Daum SAPD Snapshot Repository</name>
-			<url>http://maven.daumcorp.com/content/repositories/daum-sapd-snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
-
 </project>
