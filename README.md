@@ -108,4 +108,3 @@ public class PersonRepositoryIntegrationTest {
 ```
 
 Then you can use your restful web service([Spring Data Web Exporter](https://github.com/SpringSource/spring-data-rest)) as data access layer.
-
