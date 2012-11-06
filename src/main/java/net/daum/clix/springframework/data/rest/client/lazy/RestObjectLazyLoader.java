@@ -25,7 +25,6 @@ public class RestObjectLazyLoader implements LazyLoader {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object loadObject() throws Exception {
-
 		return restClient.getForObjectForLocation((RestEntityInformation) RestEntityInformationSupport.getMetadata(type), href);
 	}
 

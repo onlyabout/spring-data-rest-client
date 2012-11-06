@@ -25,7 +25,11 @@ public class RestRepositoryQueryExecutor<T, ID extends Serializable> implements 
 	}
 
 	public Object execute(Object[] parameters) {
-
+		
+		if (metadata.getDomainType().isAssignableFrom(method.getReturnType())) {
+			return restClient.queryForObject(metadata.getDomainType(), method, parameters);
+		}
+		
 		if (List.class.isAssignableFrom(method.getReturnType())) {
 			return restClient.queryForList(metadata.getDomainType(), method, parameters);
 		}

@@ -254,6 +254,10 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		assertNotNull(person);
 		assertEquals("Jongjin Han", person.getName());
 	}
+	
+//	@Test
+//	public void queryMethodThatReturnsAnObject() {
+//	}
 
 	@Test
 	public void update() {

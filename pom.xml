@@ -4,7 +4,7 @@
 
 	<groupId>net.daum.clix</groupId>
 	<artifactId>spring-data-rest-cli</artifactId>
-	<version>0.0.6-SNAPSHOT</version>
+	<version>0.0.8-SNAPSHOT</version>
 	<name>Spring Data Web Exporter Client</name>
 	<description>Client library for the Spring Data Web Exporter</description>
 
@@ -12,7 +12,7 @@
 		<springframeworkdata.version>1.0.0.RC3</springframeworkdata.version>
 		<cglib.version>2.2.2</cglib.version>
 		<httpclient.version>4.2.1</httpclient.version>
-		
+
 		<!-- For test -->
 		<springframework.version>3.1.2.RELEASE</springframework.version>
 		<junit.version>4.10</junit.version>
@@ -98,4 +98,17 @@
 		</plugins>
 	</build>
 
+	<distributionManagement>
+		<repository>
+			<id>daum-sapd</id>
+			<name>Daum SAPD Repository</name>
+			<url>http://maven.daumcorp.com/content/repositories/daum-sapd</url>
+		</repository>
+
+		<snapshotRepository>
+			<id>daum-sapd-snapshots</id>
+			<name>Daum SAPD Snapshot Repository</name>
+			<url>http://maven.daumcorp.com/content/repositories/daum-sapd-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>

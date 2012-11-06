@@ -141,16 +141,31 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		}
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <T> T queryForObject(Class<T> type, Method queryMethod, Object[] parameters) {
+		refresh();
+		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
+		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
+		
+		if (res == null || res.getContent() == null || res.getContent().size() == 0)
+			return null;
+		if (res.getContent().size() > 1)
+			throw new IllegalArgumentException("Result for method : " + queryMethod.toString() + " contains more than 1 result!");
+		
+		return (T) getLazyLoadingObjectFrom(res.getContent().iterator().next(), (RestEntityInformation) RestEntityInformationSupport.getMetadata(type));
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters) {
+		refresh();
 		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
-		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class,
-				type);
+		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
 		return resourcesToIterable(res);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType) {
+		refresh();
 		Resource<Map<K, Resource<V>>> resource = executeGetForMap(href, Resource.class, keyType, valueType);
 
 		Map<K, Resource<V>> content = resource.getContent();
@@ -275,7 +290,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		this.applicationContext = applicationContext;
 	}
 
-	private void refresh() {
+	private synchronized void refresh() {
 		Assert.notNull(applicationContext);
 
 		if (null == repositories)

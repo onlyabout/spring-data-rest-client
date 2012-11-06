@@ -3,6 +3,7 @@ package net.daum.clix.springframework.data.rest.client.metadata;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import net.sf.cglib.proxy.Enhancer;
 
@@ -79,6 +80,8 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 		Object value = id;
 
 		Field idField = getIdField();
+		
+		Assert.notNull(idField);
 
 		if (String.class.isAssignableFrom(id.getClass()))
 			value = net.daum.clix.springframework.data.rest.client.util.ReflectionUtils.valueOf(id.toString(),
@@ -95,6 +98,18 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 			if (f.isAnnotationPresent(org.springframework.data.annotation.Id.class)
 					|| f.isAnnotationPresent(javax.persistence.Id.class)) {
 				return f;
+			}
+		}
+		
+		for (Method m : getJavaType().getMethods()) {
+			if (m.isAnnotationPresent(org.springframework.data.annotation.Id.class)
+					|| m.isAnnotationPresent(javax.persistence.Id.class)) {
+				String methodName = m.getName();
+				if (methodName.startsWith("get")) {
+					String fieldName = methodName.substring(3);
+					fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
+					return ReflectionUtils.findField(getJavaType(), fieldName, m.getReturnType());
+				}
 			}
 		}
 

@@ -37,6 +37,8 @@ public interface RestClient {
 
 	<K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType);
 	
+	<T> T queryForObject(Class<T> domainType, Method queryMethod, Object[] parameters);
+	
 	<T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters);
 
 }

@@ -55,7 +55,7 @@ public class CommonsRestClient extends RestClientBase {
 		// // Increase default max connection per route to 20
 		// cm.setDefaultMaxPerRoute(20);
 		// // Increase max connections for localhost:80 to 50
-		// HttpHost localhost = new HttpHost("locahost", 8080);
+		// HttpHost localhost = new HttpHost("localhost", 8080);
 		// cm.setMaxPerRoute(new HttpRoute(localhost), 50);
 
 		this.client = new DefaultHttpClient();
@@ -129,8 +129,8 @@ public class CommonsRestClient extends RestClientBase {
 			savedLocation = res.getHeaders("Location")[0].getValue();
 
 		if (!StringUtils.hasText(savedLocation) && res.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-			savedLocation = ((HttpUriRequest)httpRequest).getURI().toString();
-			
+			savedLocation = ((HttpUriRequest) httpRequest).getURI().toString();
+
 		return savedLocation;
 	}
 
