@@ -6,6 +6,7 @@ import java.util.List;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -25,13 +26,17 @@ public class RestRepositoryQueryExecutor<T, ID extends Serializable> implements 
 	}
 
 	public Object execute(Object[] parameters) {
-		
+
 		if (metadata.getDomainType().isAssignableFrom(method.getReturnType())) {
 			return restClient.queryForObject(metadata.getDomainType(), method, parameters);
 		}
-		
+
 		if (List.class.isAssignableFrom(method.getReturnType())) {
 			return restClient.queryForList(metadata.getDomainType(), method, parameters);
+		}
+
+		if (Page.class.isAssignableFrom(method.getReturnType())) {
+			return restClient.queryForPageable(metadata.getDomainType(), method, parameters);
 		}
 
 		throw new IllegalAccessError("RestRepositoryQuery#execute for return type " + method.getReturnType()

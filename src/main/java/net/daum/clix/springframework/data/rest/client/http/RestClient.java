@@ -44,4 +44,5 @@ public interface RestClient {
 
 	<T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters);
 
+	<T> Page<T> queryForPageable(Class<T> domainType, Method method, Object[] parameters);
 }

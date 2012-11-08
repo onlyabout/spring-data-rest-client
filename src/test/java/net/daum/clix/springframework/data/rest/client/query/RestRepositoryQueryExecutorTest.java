@@ -21,6 +21,7 @@ public class RestRepositoryQueryExecutorTest {
 	@Mock
 	private RepositoryMetadata repositoryMetadata;
 	
+	@SuppressWarnings("rawtypes")
 	@InjectMocks
 	private RestRepositoryQueryExecutor restRepositoryQueryExecutor;
 	

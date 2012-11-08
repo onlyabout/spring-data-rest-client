@@ -166,7 +166,35 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
 		return resourcesToIterable(res);
 	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	public <T> Page<T> queryForPageable(Class<T> type, Method queryMethod, Object[] parameters) {
+		refresh();
+		
+		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
+		
+		RestEntityInformation entityInfo = (RestEntityInformation) RestEntityInformationSupport.getMetadata(type);
+		
+		PagedResources<Resource<T>> resources = (PagedResources<Resource<T>>) executeGet(href, PagedResources.class,
+				entityInfo.getJavaType());
+		
+		Pageable pageable = null;
+		for (Object parameter : parameters) {
+			if (Pageable.class.isAssignableFrom(parameter.getClass()))
+				pageable = (Pageable) parameter;
+		}
 
+		if (pageable == null) {
+			Long number = resources.getMetadata().getNumber();
+			Long size = resources.getMetadata().getSize();
+			pageable = new PageRequest(number.intValue(), size.intValue());
+		}
+
+		return new PageImpl<T>(resourcesToIterable(resources), pageable, resources.getMetadata().getTotalElements());
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public <V> Set<V> getForSet(String href, Class<V> valueType) {
 		refresh();
