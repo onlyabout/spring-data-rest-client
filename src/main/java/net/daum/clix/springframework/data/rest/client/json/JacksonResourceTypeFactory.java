@@ -2,6 +2,7 @@ package net.daum.clix.springframework.data.rest.client.json;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Set;
 
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.type.JavaType;
@@ -31,6 +32,13 @@ public class JacksonResourceTypeFactory {
 		JavaType mapType = typeFactory.constructMapType(Map.class, simpleKeyType, wrappedValueType);
 
 		return typeFactory.constructParametricType((Class<?>) resourceType, mapType);
+	}
+
+	public JavaType getSetResourceType(Type resourceType, Type valueType) {
+		JavaType wrappedValueType = typeFactory.constructParametricType(Resource.class, (Class<?>) valueType);
+		JavaType setType = typeFactory.constructParametricType(Set.class, wrappedValueType);
+
+		return typeFactory.constructParametricType((Class<?>) resourceType, setType);
 	}
 
 }

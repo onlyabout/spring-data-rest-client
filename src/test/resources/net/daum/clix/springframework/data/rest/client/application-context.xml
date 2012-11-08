@@ -17,7 +17,7 @@
 
 	<bean id="restClient"
 		class="net.daum.clix.springframework.data.rest.client.http.CommonsRestClient">
-		<constructor-arg value="http://localhost:8080/data"/>
+		<constructor-arg value="http://localhost:8080/spring-data-rest-webmvc"/>
 	</bean>
 
 	<rest:repositories base-package="org.springframework.data.rest.example" />

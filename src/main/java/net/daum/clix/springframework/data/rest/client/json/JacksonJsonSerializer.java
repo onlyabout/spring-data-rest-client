@@ -41,7 +41,16 @@ public class JacksonJsonSerializer implements JsonSerializer {
 
 		return readValue(jsonData, typeFactory.getResourceType(resourceType, objectType));
 	}
-	
+
+	public Object deserializeSetResource(byte[] jsonData, Type resourceType, Type valueType) {
+		if (jsonData == null)
+			return null;
+		
+		JavaType setResourceType = typeFactory.getSetResourceType(resourceType, valueType);
+		
+		return readValue(jsonData, setResourceType);
+	}
+
 	public Object deserializeMapResource(byte[] jsonData, Type resourceType, Type keyType, Type valueType) {
 		if (jsonData == null)
 			return null;
@@ -60,6 +69,5 @@ public class JacksonJsonSerializer implements JsonSerializer {
 
 		return null;
 	}
-
 
 }

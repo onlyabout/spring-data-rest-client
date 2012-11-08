@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.daum.clix.springframework.data.rest.client.metadata.RestEntityInformation;
 
@@ -12,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 public interface RestClient {
-	
+
 	<T, ID extends Serializable> T getForObjectForLocation(RestEntityInformation<T, ID> entityInfo, String url);
 
 	<T, ID extends Serializable> T getForObject(RestEntityInformation<T, ID> domainType, ID id);
@@ -35,10 +36,12 @@ public interface RestClient {
 
 	<T> List<T> getForList(String href, Class<T> type);
 
+	<V> Set<V> getForSet(String href, Class<V> valueType);
+
 	<K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType);
-	
+
 	<T> T queryForObject(Class<T> domainType, Method queryMethod, Object[] parameters);
-	
+
 	<T> List<T> queryForList(Class<T> type, Method queryMethod, Object[] parameters);
 
 }

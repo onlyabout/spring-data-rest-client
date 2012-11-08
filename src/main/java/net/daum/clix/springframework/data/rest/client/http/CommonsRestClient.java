@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Set;
 
 import net.daum.clix.springframework.data.rest.client.json.JacksonJsonSerializer;
 import net.daum.clix.springframework.data.rest.client.json.JsonSerializer;
@@ -80,6 +81,16 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 		HttpResponse res = execute(req);
 
 		return (ResourceSupport) jsonSerializer.deserialize(getBody(res), resourceType, objectType);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected <V> Resource<Set<Resource<V>>> executeGetForSet(String url, Type resourceType, Type valueType) {
+		HttpGet req = (HttpGet) setDefaultHeader(new HttpGet(url));
+		HttpResponse res = execute(req);
+		
+		return (Resource<Set<Resource<V>>>) jsonSerializer
+				.deserializeSetResource(getBody(res), resourceType, valueType);
 	}
 
 	@SuppressWarnings("unchecked")

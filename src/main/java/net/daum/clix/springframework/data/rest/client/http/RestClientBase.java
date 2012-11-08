@@ -7,8 +7,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.daum.clix.springframework.data.rest.client.lazy.ProxyCreator;
 import net.daum.clix.springframework.data.rest.client.lazy.RestLazyLoadingIterable;
@@ -146,13 +148,15 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		refresh();
 		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
 		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
-		
+
 		if (res == null || res.getContent() == null || res.getContent().size() == 0)
 			return null;
 		if (res.getContent().size() > 1)
-			throw new IllegalArgumentException("Result for method : " + queryMethod.toString() + " contains more than 1 result!");
-		
-		return (T) getLazyLoadingObjectFrom(res.getContent().iterator().next(), (RestEntityInformation) RestEntityInformationSupport.getMetadata(type));
+			throw new IllegalArgumentException("Result for method : " + queryMethod.toString()
+					+ " contains more than 1 result!");
+
+		return (T) getLazyLoadingObjectFrom(res.getContent().iterator().next(),
+				(RestEntityInformation) RestEntityInformationSupport.getMetadata(type));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -163,17 +167,39 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		return resourcesToIterable(res);
 	}
 
+	@Override
+	public <V> Set<V> getForSet(String href, Class<V> valueType) {
+		refresh();
+
+		RestEntityInformation<V, Serializable> entityInfo = (RestEntityInformation) RestEntityInformationSupport
+				.getMetadata(valueType);
+
+		Resource<Set<Resource<V>>> resource = executeGetForSet(href, Resource.class, valueType);
+
+		Set<Resource<V>> content = resource.getContent();
+		Set<V> lazyObjectSet = new HashSet<V>();
+
+		for (Resource<V> element : content) {
+			V value = (V) getLazyLoadingObjectFrom(element, entityInfo);
+			lazyObjectSet.add(value);
+		}
+
+		return lazyObjectSet;
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <K, V> Map<K, V> getForMap(String href, Class<K> keyType, Class<V> valueType) {
 		refresh();
+		RestEntityInformation<V, Serializable> entityInfo = (RestEntityInformation) RestEntityInformationSupport
+				.getMetadata(valueType);
+
 		Resource<Map<K, Resource<V>>> resource = executeGetForMap(href, Resource.class, keyType, valueType);
 
 		Map<K, Resource<V>> content = resource.getContent();
 		Map<K, V> lazyObjectsMap = new HashMap<K, V>();
 
 		for (K key : content.keySet()) {
-			V value = (V) getLazyLoadingObjectFrom(content.get(key),
-					(RestEntityInformation) RestEntityInformationSupport.getMetadata(valueType));
+			V value = (V) getLazyLoadingObjectFrom(content.get(key), entityInfo);
 			lazyObjectsMap.put(key, value);
 		}
 
@@ -262,6 +288,9 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 	}
 
 	public abstract ResourceSupport executeGet(String url, Type resourceType, Type objectType);
+
+	protected abstract <V> Resource<Set<Resource<V>>> executeGetForSet(String url, Type resourceType,
+			Type valueType);
 
 	protected abstract <K, V> Resource<Map<K, Resource<V>>> executeGetForMap(String url, Type resourceType,
 			Type keyType, Type valueType);

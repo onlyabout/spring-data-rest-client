@@ -1,18 +1,28 @@
 package net.daum.clix.springframework.data.rest.client.lazy;
 
+import org.springframework.util.Assert;
+
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
 import net.sf.cglib.proxy.LazyLoader;
 
 public class RestSetLazyLoader implements LazyLoader {
 
-	public RestSetLazyLoader(RestClient restClient, String href, Class<?> genericTypeFrom) {
-		// TODO Auto-generated method stub
-		throw new IllegalAccessError("RestSetLazyLoader#constructor has not implemented yet!");
+	private RestClient restClient;
+	private String href;
+	private Class<?> valueType;
+
+	public RestSetLazyLoader(RestClient restClient, String href, Class<?> valueType) {
+		Assert.notNull(restClient);
+		Assert.notNull(href);
+		Assert.notNull(valueType);
+		
+		this.restClient = restClient;
+		this.href = href;
+		this.valueType = valueType;
 	}
 
 	public Object loadObject() throws Exception {
-		// TODO Auto-generated method stub
-		throw new IllegalAccessError("RestSetLazyLoader#loadObject has not implemented yet!");
+		return restClient.getForSet(href, valueType);
 	}
 
 }
