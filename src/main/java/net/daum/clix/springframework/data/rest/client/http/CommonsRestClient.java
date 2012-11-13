@@ -80,7 +80,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 		HttpGet req = (HttpGet) setDefaultHeader(new HttpGet(url));
 		HttpResponse res = execute(req);
 
-		return (ResourceSupport) jsonSerializer.deserialize(getBody(res), resourceType, objectType);
+		return (ResourceSupport) jsonSerializer.deserialize(getBodyFromResponseAndResetRequest(req, res), resourceType, objectType);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -90,7 +90,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 		HttpResponse res = execute(req);
 		
 		return (Resource<Set<Resource<V>>>) jsonSerializer
-				.deserializeSetResource(getBody(res), resourceType, valueType);
+				.deserializeSetResource(getBodyFromResponseAndResetRequest(req, res), resourceType, valueType);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -100,7 +100,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 		HttpGet req = (HttpGet) setDefaultHeader(new HttpGet(url));
 		HttpResponse res = execute(req);
 
-		return (Resource<Map<K, Resource<V>>>) jsonSerializer.deserializeMapResource(getBody(res), resourceType,
+		return (Resource<Map<K, Resource<V>>>) jsonSerializer.deserializeMapResource(getBodyFromResponseAndResetRequest(req, res), resourceType,
 				keyType, valueType);
 	}
 
@@ -112,6 +112,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 		int statusCode = res.getStatusLine().getStatusCode();
 
 		EntityUtils.consumeQuietly(res.getEntity());
+		req.reset();
 
 		if (statusCode == HttpStatus.SC_INTERNAL_SERVER_ERROR)
 			throw new UnsupportedOperationException(req.getMethod() + " failed for " + url + "\treason : "
@@ -151,23 +152,26 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 
 		if (!StringUtils.hasText(savedLocation) && res.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
 			savedLocation = ((HttpUriRequest) httpRequest).getURI().toString();
+		
+		((HttpRequestBase) httpRequest).reset();
 
 		return savedLocation;
 	}
 
-	private byte[] getBody(HttpResponse httpResponse) {
-
+	private byte[] getBodyFromResponseAndResetRequest(HttpUriRequest req, HttpResponse res) {
 		byte[] bytes = null;
-		HttpEntity entity = httpResponse.getEntity();
+		HttpEntity entity = res.getEntity();
 
 		try {
-			if (HttpStatus.SC_OK == httpResponse.getStatusLine().getStatusCode())
+			if (HttpStatus.SC_OK == res.getStatusLine().getStatusCode())
 				bytes = EntityUtils.toByteArray(entity);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			EntityUtils.consumeQuietly(entity);
+			((HttpRequestBase) req).reset();
 		}
 
-		EntityUtils.consumeQuietly(entity);
 		return bytes;
 	}
 
@@ -178,9 +182,8 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			((HttpRequestBase) req).releaseConnection();
 		}
+		
 		return null;
 	}
 
