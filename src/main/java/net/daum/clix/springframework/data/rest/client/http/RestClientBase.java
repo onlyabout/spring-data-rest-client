@@ -170,19 +170,19 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
 		return resourcesToIterable(res);
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public <T> Page<T> queryForPageable(Class<T> type, Method queryMethod, Object[] parameters) {
 		refresh();
-		
+
 		String href = urlBuilder.buildQueryUrl(type, queryMethod, parameters);
-		
+
 		RestEntityInformation entityInfo = (RestEntityInformation) RestEntityInformationSupport.getMetadata(type);
-		
+
 		PagedResources<Resource<T>> resources = (PagedResources<Resource<T>>) executeGet(href, PagedResources.class,
 				entityInfo.getJavaType());
-		
+
 		Pageable pageable = null;
 		for (Object parameter : parameters) {
 			if (Pageable.class.isAssignableFrom(parameter.getClass()))
@@ -190,9 +190,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		}
 
 		if (pageable == null) {
-			Long number = resources.getMetadata().getNumber();
-			Long size = resources.getMetadata().getSize();
-			pageable = new PageRequest(number.intValue(), size.intValue());
+			pageable = getPageableFrom(resources);
 		}
 
 		return new PageImpl<T>(resourcesToIterable(resources), pageable, resources.getMetadata().getTotalElements());
@@ -260,9 +258,7 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 				entityInfo.getJavaType());
 
 		if (pageable == null) {
-			Long number = resources.getMetadata().getNumber();
-			Long size = resources.getMetadata().getSize();
-			pageable = new PageRequest(number.intValue(), size.intValue());
+			pageable = getPageableFrom(resources);
 		}
 
 		return new PageImpl<T>(resourcesToIterable(resources), pageable, resources.getMetadata().getTotalElements());
@@ -318,11 +314,17 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		return entity;
 	}
+	
+	@SuppressWarnings("rawtypes")
+	private Pageable getPageableFrom(PagedResources resources) {
+		Long number = resources.getMetadata().getNumber() - 1;
+		Long size = resources.getMetadata().getSize();
+		return new PageRequest(number.intValue(), size.intValue());
+	}
 
 	public abstract ResourceSupport executeGet(String url, Type resourceType, Type objectType);
 
-	protected abstract <V> Resource<Set<Resource<V>>> executeGetForSet(String url, Type resourceType,
-			Type valueType);
+	protected abstract <V> Resource<Set<Resource<V>>> executeGetForSet(String url, Type resourceType, Type valueType);
 
 	protected abstract <K, V> Resource<Map<K, Resource<V>>> executeGetForMap(String url, Type resourceType,
 			Type keyType, Type valueType);

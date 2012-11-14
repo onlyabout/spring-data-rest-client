@@ -209,12 +209,12 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		Person person3 = personRepository.save(new Person("name3", null, null));
 		Person person4 = personRepository.save(new Person("name4", null, null));
 
-		Pageable pageable = new PageRequest(1, 2, new Sort(Direction.ASC, "name"));
+		Pageable pageable = new PageRequest(0, 2, new Sort(Direction.ASC, "name"));
 		Page<Person> result = personRepository.findAll(pageable);
 
 		assertNotNull(result);
 		assertEquals(2, result.getSize());
-		assertEquals(1, result.getNumber());
+		assertEquals(0, result.getNumber());
 		assertEquals(2, result.getNumberOfElements());
 		assertEquals(4, result.getTotalElements());
 
@@ -224,12 +224,12 @@ public class SimpleRestRepositoryIntegrationTest extends SpringIntegrationTestBa
 		assertEquals(this.person.getName(), listResult.get(0).getName());
 		assertEquals(person2.getName(), listResult.get(1).getName());
 
-		pageable = new PageRequest(2, 2, new Sort(Direction.ASC, "name"));
+		pageable = new PageRequest(1, 2, new Sort(Direction.ASC, "name"));
 		result = personRepository.findAll(pageable);
 
 		assertNotNull(result);
 		assertEquals(2, result.getSize());
-		assertEquals(2, result.getNumber());
+		assertEquals(1, result.getNumber());
 		assertEquals(2, result.getNumberOfElements());
 		assertEquals(4, result.getTotalElements());
 

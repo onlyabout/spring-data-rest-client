@@ -147,7 +147,8 @@ public class RestUrlBuilder {
 
 			addSort(pMap, pageable.getSort());
 
-			pMap.put("page", String.valueOf(pageable.getPageNumber()));
+			// 0-indexed pages expected. spring-data-rest uses 1-indexed. so +1 will be fine.
+			pMap.put("page", String.valueOf(pageable.getPageNumber() + 1));
 			pMap.put("limit", String.valueOf(pageable.getPageSize()));
 		}
 
