@@ -41,6 +41,12 @@
 			<version>${httpclient.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+
 		<!-- Testing -->
 		<dependency>
 			<groupId>org.springframework</groupId>

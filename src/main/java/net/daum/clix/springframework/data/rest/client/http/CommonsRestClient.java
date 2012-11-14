@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import net.daum.clix.springframework.data.rest.client.json.JacksonJsonSerializer;
+import net.daum.clix.springframework.data.rest.client.json.JacksonPolymorphicDeserializationPreProcessor;
+import net.daum.clix.springframework.data.rest.client.json.JsonPreProcessor;
 import net.daum.clix.springframework.data.rest.client.json.JsonSerializer;
 import net.daum.clix.springframework.data.rest.client.util.RestUrlUtil;
 
@@ -49,9 +51,11 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 
 	private BasicHeader defaultHeader;
 
+	private JsonPreProcessor jsonPreProcessor;
+
 	public CommonsRestClient(String restServerUrl) {
 		super(restServerUrl);
-
+		
 		URL url = null;
 		try {
 			url = new URL(RestUrlUtil.normalize(restServerUrl));
@@ -59,7 +63,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 			e.printStackTrace();
 		}
 
-		Assert.notNull(url);
+		Assert.notNull(url, "Rest Server URL must be specified.");
 
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
 		schemeRegistry.register(new Scheme(url.getProtocol(), url.getPort(), PlainSocketFactory.getSocketFactory()));
@@ -77,10 +81,23 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 
 	@Override
 	public ResourceSupport executeGet(String url, Type resourceType, Type objectType) {
+		initPreProcessor();
+		
 		HttpGet req = (HttpGet) setDefaultHeader(new HttpGet(url));
 		HttpResponse res = execute(req);
+		
+		byte[] body = getBodyFromResponseAndResetRequest(req, res);
+		
+		if (jsonPreProcessor.canProcess((Class<?>) objectType)) {
+			body = jsonPreProcessor.process(body, (Class<?>) resourceType, (Class<?>) objectType);
+		}
 
-		return (ResourceSupport) jsonSerializer.deserialize(getBodyFromResponseAndResetRequest(req, res), resourceType, objectType);
+		return (ResourceSupport) jsonSerializer.deserialize(body, resourceType, objectType);
+	}
+
+	private void initPreProcessor() {
+		if (null == jsonPreProcessor)
+			jsonPreProcessor = new JacksonPolymorphicDeserializationPreProcessor(getRepositories());
 	}
 
 	@SuppressWarnings("unchecked")

@@ -44,6 +44,7 @@ import org.springframework.util.StringUtils;
 public class RestRepositories implements Iterable<Class<?>> {
 
 	private final Map<Class<?>, RepositoryFactoryInformation<Object, Serializable>> domainClassToBeanName = new HashMap<Class<?>, RepositoryFactoryInformation<Object, Serializable>>();
+	private final Map<String, RepositoryFactoryInformation<Object, Serializable>> resourcePathToBeanName = new HashMap<String, RepositoryFactoryInformation<Object, Serializable>>();
 	private final Map<RepositoryFactoryInformation<Object, Serializable>, CrudRepository<Object, Serializable>> repositories = new HashMap<RepositoryFactoryInformation<Object, Serializable>, CrudRepository<Object, Serializable>>();
 
 	/**
@@ -73,9 +74,20 @@ public class RestRepositories implements Iterable<Class<?>> {
 						factory, objectType);
 
 				this.domainClassToBeanName.put(information.getDomainType(), info);
+				this.resourcePathToBeanName.put(getResourcePath(repository), info);
 				this.repositories.put(info, repository);
+
 			}
 		}
+	}
+
+	private String getResourcePath(CrudRepository<Object, Serializable> repository) {
+		String path = StringUtils.uncapitalize(repository.getClass().getSimpleName().replaceAll("Repository", ""));
+		RestResource restResource = repository.getClass().getAnnotation(RestResource.class);
+		if (restResource != null && StringUtils.hasText(restResource.path())) {
+			path = restResource.path();
+		}
+		return path;
 	}
 
 	/**
@@ -134,6 +146,8 @@ public class RestRepositories implements Iterable<Class<?>> {
 	/**
 	 * Returns the {@link Repository} class interface for the given domain
 	 * class. Simply delegates to {@RepositoryInformation
+	 * 
+	 * 
 	 * }
 	 * 
 	 * @param domainCall
@@ -143,6 +157,34 @@ public class RestRepositories implements Iterable<Class<?>> {
 	public Class<?> getRepositoryInterfaceFor(Class<?> domainClass) {
 		RepositoryInformation repositoryInformation = getRepositoryInformationFor(domainClass);
 		return repositoryInformation == null ? null : repositoryInformation.getRepositoryInterface();
+	}
+
+	/**
+	 * Returns the {@link EntityInformation} for the given resource path.
+	 * 
+	 * @param resourcePath
+	 *            must not be {@literal null}.
+	 * @return the {@link EntityInformation} for the given resource path or
+	 *         {@literal null} if no repository registered for this domain
+	 *         class.
+	 */
+	public RepositoryInformation findRepositoryInformationFor(String resourcePath) {
+		RepositoryFactoryInformation<Object, Serializable> repositoryFactoryInformation = this.resourcePathToBeanName
+				.get(resourcePath);
+		return repositoryFactoryInformation == null ? null : repositoryFactoryInformation.getRepositoryInformation();
+	}
+
+	/**
+	 * Returns the {@link String} for the given resource path class.
+	 * 
+	 * @param resourcePath
+	 *            must not be {@literal null}.
+	 * @return the {@link String} for the given resource path or {@literal null}
+	 *         if no repository registered for this resource path
+	 */
+	public String findDomainClassNameFor(String resourcePath) {
+		RepositoryInformation repoInfo = findRepositoryInformationFor(resourcePath);
+		return repoInfo == null ? null : repoInfo.getDomainType().getName();
 	}
 
 	/**

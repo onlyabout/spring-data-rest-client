@@ -51,6 +51,10 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		this.restServerUrl = restServerUrl;
 	}
 
+	public RestRepositories getRepositories() {
+		return repositories;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T, ID extends Serializable> T getForObjectForLocation(RestEntityInformation<T, ID> entityInfo, String url) {
 		refresh();
