@@ -2,7 +2,7 @@ package net.daum.clix.springframework.data.rest.client.json.domain;
 
 import org.codehaus.jackson.annotate.JsonTypeInfo;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public abstract class Animal {
 
 	private String name;

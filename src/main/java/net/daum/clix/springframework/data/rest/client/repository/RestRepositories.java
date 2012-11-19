@@ -74,16 +74,16 @@ public class RestRepositories implements Iterable<Class<?>> {
 						factory, objectType);
 
 				this.domainClassToBeanName.put(information.getDomainType(), info);
-				this.resourcePathToBeanName.put(getResourcePath(repository), info);
+				this.resourcePathToBeanName.put(getResourcePath(repositoryInterface), info);
 				this.repositories.put(info, repository);
 
 			}
 		}
 	}
 
-	private String getResourcePath(CrudRepository<Object, Serializable> repository) {
-		String path = StringUtils.uncapitalize(repository.getClass().getSimpleName().replaceAll("Repository", ""));
-		RestResource restResource = repository.getClass().getAnnotation(RestResource.class);
+	private String getResourcePath(Class<?> repositoryInterface) {
+		String path = StringUtils.uncapitalize(repositoryInterface.getSimpleName().replaceAll("Repository", ""));
+		RestResource restResource = repositoryInterface.getAnnotation(RestResource.class);
 		if (restResource != null && StringUtils.hasText(restResource.path())) {
 			path = restResource.path();
 		}

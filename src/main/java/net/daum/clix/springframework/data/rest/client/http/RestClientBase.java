@@ -273,11 +273,8 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		List<T> list = new ArrayList<T>();
 
 		for (Resource<T> r : (Collection<Resource<T>>) resources.getContent()) {
-			T content = r.getContent();
-			RestEntityInformation info = (RestEntityInformation) RestEntityInformationSupport.getMetadata(content
-					.getClass());
-			info.setId(content, RestUrlUtil.getIdFrom(r.getId().getHref()));
-			list.add(content);
+			RestEntityInformation info = (RestEntityInformation) RestEntityInformationSupport.getMetadata(r.getContent().getClass());
+			list.add((T) getLazyLoadingObjectFrom(r, info));
 		}
 
 		return list;

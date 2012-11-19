@@ -15,7 +15,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.example.Person;
 import org.springframework.data.rest.example.PersonRepository;
 import org.springframework.data.rest.repository.annotation.RestResource;
@@ -53,13 +52,13 @@ public class RestUrlBuilderTest {
 
 	@Test
 	public void testBuildWithParameters() throws Exception {
-		String url = urlBuilder.buildWithParameters(domainClass, new PageRequest(1, 10));
+		String url = urlBuilder.buildWithParameters(domainClass, new PageRequest(0, 10));
 		assertEquals("http://1.2.3.4/people?limit=10&page=1", url);
 
 		url = urlBuilder.buildWithParameters(domainClass, new Sort(Direction.DESC, "name"));
 		assertEquals("http://1.2.3.4/people?name.dir=DESC&sort=name", url);
 
-		url = urlBuilder.buildWithParameters(domainClass, new PageRequest(1, 10, new Sort(Direction.DESC, "name")));
+		url = urlBuilder.buildWithParameters(domainClass, new PageRequest(0, 10, new Sort(Direction.DESC, "name")));
 		assertEquals("http://1.2.3.4/people?limit=10&name.dir=DESC&page=1&sort=name", url);
 	}
 
@@ -70,7 +69,7 @@ public class RestUrlBuilderTest {
 		String url = urlBuilder.buildQueryUrl(Person.class, queryMethod);
 		assertEquals("http://1.2.3.4/people/search/name", url);
 
-		url = urlBuilder.buildQueryUrl(Person.class, queryMethod, new PageRequest(1, 10), new Sort(Direction.ASC,
+		url = urlBuilder.buildQueryUrl(Person.class, queryMethod, new PageRequest(0, 10), new Sort(Direction.ASC,
 				"name"));
 		assertEquals("http://1.2.3.4/people/search/name?limit=10&name.dir=ASC&page=1&sort=name", url);
 	}

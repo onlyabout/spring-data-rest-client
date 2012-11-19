@@ -10,7 +10,7 @@ import java.util.Set;
 
 import net.daum.clix.springframework.data.rest.client.json.JacksonJsonSerializer;
 import net.daum.clix.springframework.data.rest.client.json.JacksonPolymorphicDeserializationPreProcessor;
-import net.daum.clix.springframework.data.rest.client.json.JsonPreProcessor;
+import net.daum.clix.springframework.data.rest.client.json.JsonProcessor;
 import net.daum.clix.springframework.data.rest.client.json.JsonSerializer;
 import net.daum.clix.springframework.data.rest.client.util.RestUrlUtil;
 
@@ -51,7 +51,7 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 
 	private BasicHeader defaultHeader;
 
-	private JsonPreProcessor jsonPreProcessor;
+	private JsonProcessor jsonPreProcessor;
 
 	public CommonsRestClient(String restServerUrl) {
 		super(restServerUrl);
@@ -92,7 +92,9 @@ public class CommonsRestClient extends RestClientBase implements DisposableBean 
 			body = jsonPreProcessor.process(body, (Class<?>) resourceType, (Class<?>) objectType);
 		}
 
-		return (ResourceSupport) jsonSerializer.deserialize(body, resourceType, objectType);
+		Object deserialized = jsonSerializer.deserialize(body, resourceType, objectType);
+		
+		return (ResourceSupport) deserialized;
 	}
 
 	private void initPreProcessor() {

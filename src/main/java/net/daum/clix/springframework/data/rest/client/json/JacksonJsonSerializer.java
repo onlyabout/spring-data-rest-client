@@ -21,6 +21,7 @@ public class JacksonJsonSerializer implements JsonSerializer {
 		this.mapper = new ObjectMapper();
 		this.mapper.setSerializationInclusion(Inclusion.NON_EMPTY);
 		this.mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//		this.mapper.setAnnotationIntrospector(new JpaAwareJacksonAnnotationIntrospector());
 
 		this.typeFactory = new JacksonResourceTypeFactory(mapper.getTypeFactory());
 	}

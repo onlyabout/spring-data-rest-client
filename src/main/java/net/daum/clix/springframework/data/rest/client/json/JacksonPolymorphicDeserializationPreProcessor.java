@@ -1,5 +1,4 @@
-package net.daum.clix.springframework.data.rest.client.json;
-
+package net.daum.clix.springframework.data.rest.client.json; 
 import java.lang.reflect.Modifier;
 
 import net.daum.clix.springframework.data.rest.client.repository.RestRepositories;
@@ -20,7 +19,7 @@ import com.google.gson.JsonParser;
  * @author 84june
  * 
  */
-public class JacksonPolymorphicDeserializationPreProcessor implements JsonPreProcessor {
+public class JacksonPolymorphicDeserializationPreProcessor implements JsonProcessor {
 
 	private RestRepositories repositories;
 

@@ -7,7 +7,7 @@ package net.daum.clix.springframework.data.rest.client.json;
  * @author 84june
  *
  */
-public interface JsonPreProcessor {
+public interface JsonProcessor {
 
 	boolean canProcess(Class<?> objectType);
 

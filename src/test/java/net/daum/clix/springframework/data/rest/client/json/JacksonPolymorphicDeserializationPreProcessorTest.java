@@ -18,6 +18,7 @@ import net.daum.clix.springframework.data.rest.client.repository.RestRepositorie
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.type.JavaType;
 import org.junit.Before;
@@ -41,16 +42,20 @@ public class JacksonPolymorphicDeserializationPreProcessorTest {
 	JacksonPolymorphicDeserializationPreProcessor preProcessor;
 
 	private PagedResources<Resource<Animal>> pagedResources;
-	
+
 	private Resource<Animal> resource;
+
+	private ObjectMapper mapper;
+
+	private TypeFactory typeFactory;
 
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setUp() throws Exception {
 		Resource<Animal> dog = new Resource<Animal>(new Dog("nameofdog", 1.0), new Link(
 				"http://anydomainaddr.com/dog/1", "self"));
-		Resource<Animal> cat = new Resource<Animal>(new Cat("nameofcat", 3), new Link(
-				"http://anydomainaddr.com/cat/1", "self"));
+		Resource<Animal> cat = new Resource<Animal>(new Cat("nameofcat", 3), new Link("http://anydomainaddr.com/cat/1",
+				"self"));
 		Resource<Animal> dog2 = new Resource<Animal>(new Dog("nameofdog2", 10.2), new Link(
 				"http://anydomainaddr.com/dog/2", "self"));
 
@@ -59,9 +64,15 @@ public class JacksonPolymorphicDeserializationPreProcessorTest {
 		List<Link> asList = Arrays.asList(new Link("http://1.2.3.4/dog/2", "next"), new Link(
 				"http://1.2.3.4/dog/search", "search"));
 
+		mapper = new ObjectMapper();
+		mapper.setSerializationInclusion(Inclusion.NON_EMPTY);
+		// mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,
+		// false);
+		typeFactory = mapper.getTypeFactory();
+
 		pagedResources = new PagedResources<Resource<Animal>>(animals, metadata, asList);
 		resource = dog;
-		
+
 		when(repositories.findDomainClassNameFor("dog")).thenReturn(Dog.class.getName());
 		when(repositories.findDomainClassNameFor("cat")).thenReturn(Cat.class.getName());
 	}
@@ -72,28 +83,27 @@ public class JacksonPolymorphicDeserializationPreProcessorTest {
 		assertFalse(preProcessor.canProcess(Dog.class));
 		assertFalse(preProcessor.canProcess(Cat.class));
 	}
-	
+
 	@Test
 	public void processShouldAddClassPropertyProperly() throws JsonParseException, JsonMappingException, IOException {
-		byte[] processed = preProcessor.process(new ObjectMapper().writeValueAsBytes(resource), Resource.class, Animal.class);
-		
-		ObjectMapper mapper = new ObjectMapper();
+		byte[] processed = preProcessor.process(mapper.writeValueAsBytes(resource), Resource.class, Animal.class);
+
 		JavaType valueType = mapper.getTypeFactory().constructParametricType(Resource.class, Animal.class);
 		Resource<Animal> processedResource = mapper.readValue(processed, valueType);
-		
+
 		assertEquals(resource, processedResource);
 	}
 
 	@Test
-	public void processShouldAddClassPropertyProperlyToResources() throws JsonParseException, JsonMappingException, IOException {
-		byte[] processed = preProcessor.process(new ObjectMapper().writeValueAsBytes(pagedResources), PagedResources.class, Animal.class);
-		
-		ObjectMapper mapper = new ObjectMapper();
-		TypeFactory typeFactory = mapper.getTypeFactory();
+	public void processShouldAddClassPropertyProperlyToResources() throws JsonParseException, JsonMappingException,
+			IOException {
+		byte[] processed = preProcessor.process(mapper.writeValueAsBytes(pagedResources), PagedResources.class,
+				Animal.class);
 		JavaType wrappedType = typeFactory.constructParametricType(Resource.class, Animal.class);
 		JavaType valueType = typeFactory.constructParametricType(PagedResources.class, wrappedType);
 		PagedResources<Resource<Animal>> processedPagedResources = mapper.readValue(processed, valueType);
-		
+
 		assertEquals(pagedResources, processedPagedResources);
 	}
+
 }

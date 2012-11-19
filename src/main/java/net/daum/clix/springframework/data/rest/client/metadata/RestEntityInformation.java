@@ -2,19 +2,22 @@ package net.daum.clix.springframework.data.rest.client.metadata;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
-import net.sf.cglib.proxy.Enhancer;
-
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.ReflectionUtils.FieldCallback;
 import org.springframework.util.StringUtils;
 
 /**
  * @author 84june
  */
 public class RestEntityInformation<T, ID extends Serializable> extends RestEntityInformationSupport<T, ID> {
+
+	private static final Map<Class<?>, Field> idFieldForDomainClass = new HashMap<Class<?>, Field>();
 
 	public RestEntityInformation(Class<T> domainClass) {
 		super(domainClass);
@@ -24,7 +27,7 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 	public Class<ID> getIdType() {
 		Field idField = getIdField();
 
-		Assert.notNull(idField);
+		Assert.notNull(idField, "Not able to find @Id field for the given entity type : " + getJavaType().getName());
 
 		return (Class<ID>) idField.getType();
 	}
@@ -33,35 +36,69 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 	public ID getId(T entity) {
 
 		Field idField = getIdField();
-		Assert.notNull(idField);
 
-		if (Enhancer.isEnhanced(entity.getClass())) {
+		Assert.notNull(idField, "Not able to find @Id field for the given entity type : " + getJavaType().getName());
 
-			try {
-				return (ID) getJavaType().getMethod(getGetterMethodName(idField.getName())).invoke(entity);
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			}
-		}
+		Method getterMethod = BeanUtils.findMethodWithMinimalParameters(getJavaType(),
+				getGetterMethodName(idField.getName()));
+
+		// if (Enhancer.isEnhanced(entity.getClass())) {
+		if (null != getterMethod)
+			return (ID) ReflectionUtils.invokeMethod(getterMethod, entity);
 
 		try {
 			idField.setAccessible(true);
 			return (ID) idField.get(entity);
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	public void setId(final T entity, final ID id) {
+		ReflectionUtils.doWithFields(getJavaType(), new FieldCallback() {
+
+			@Override
+			public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
+				Object value = id;
+
+				if (String.class.isAssignableFrom(id.getClass()))
+					value = net.daum.clix.springframework.data.rest.client.util.ReflectionUtils.valueOf(id.toString(),
+							field.getType());
+
+				field.setAccessible(true);
+				ReflectionUtils.setField(field, entity, value);
+			}
+		}, net.daum.clix.springframework.data.rest.client.util.ReflectionUtils.JPA_ID_FILED_FILTER);
+	}
+
+	public Field findFieldByRel(String rel) {
+		String[] tkns = StringUtils.tokenizeToStringArray(rel, ".");
+		String fieldName = tkns[tkns.length - 1];
+
+		return ReflectionUtils.findField(getJavaType(), fieldName);
+	}
+
+	private Field getIdField() {
+		if (idFieldForDomainClass.containsKey(getJavaType()))
+			return idFieldForDomainClass.get(getJavaType());
+
+		Class<?> javaType = getJavaType();
+
+		while (javaType != Object.class) {
+			for (Field field : javaType.getDeclaredFields()) {
+				boolean matched = net.daum.clix.springframework.data.rest.client.util.ReflectionUtils.JPA_ID_FILED_FILTER
+						.matches(field);
+				if (matched) {
+					idFieldForDomainClass.put(getJavaType(), field);
+					return field;
+				}
+			}
+
+			javaType = javaType.getSuperclass();
 		}
 
-		return null;
+		throw new IllegalArgumentException("Not able to find @Id field for the given entity type : "
+				+ getJavaType().getName());
 	}
 
 	private String getGetterMethodName(String fieldName) {
@@ -74,53 +111,6 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 		}
 
 		return sb.toString();
-	}
-
-	public void setId(T entity, ID id) {
-		Object value = id;
-
-		Field idField = getIdField();
-		
-		Assert.notNull(idField);
-
-		if (String.class.isAssignableFrom(id.getClass()))
-			value = net.daum.clix.springframework.data.rest.client.util.ReflectionUtils.valueOf(id.toString(),
-					idField.getType());
-
-		if (idField != null) {
-			idField.setAccessible(true);
-			ReflectionUtils.setField(idField, entity, value);
-		}
-	}
-
-	private Field getIdField() {
-		for (Field f : getJavaType().getDeclaredFields()) {
-			if (f.isAnnotationPresent(org.springframework.data.annotation.Id.class)
-					|| f.isAnnotationPresent(javax.persistence.Id.class)) {
-				return f;
-			}
-		}
-		
-		for (Method m : getJavaType().getMethods()) {
-			if (m.isAnnotationPresent(org.springframework.data.annotation.Id.class)
-					|| m.isAnnotationPresent(javax.persistence.Id.class)) {
-				String methodName = m.getName();
-				if (methodName.startsWith("get")) {
-					String fieldName = methodName.substring(3);
-					fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
-					return ReflectionUtils.findField(getJavaType(), fieldName, m.getReturnType());
-				}
-			}
-		}
-
-		return null;
-	}
-
-	public Field findFieldByRel(String rel) {
-		String[] tkns = StringUtils.tokenizeToStringArray(rel, ".");
-		String fieldName = tkns[tkns.length - 1];
-		
-		return ReflectionUtils.findField(getJavaType(), fieldName);
 	}
 
 }
