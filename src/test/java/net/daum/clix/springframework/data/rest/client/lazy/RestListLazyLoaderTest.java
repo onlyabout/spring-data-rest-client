@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.daum.clix.springframework.data.rest.client.http.RestClient;
+import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.LazyLoader;
 
 import org.junit.Before;
@@ -37,7 +38,7 @@ public class RestListLazyLoaderTest {
 	@Before
 	public void setUp() throws Exception {
 		listObject = Arrays.asList(aPerson().build());
-		lazyloader = new RestCollectionLazyLoader(restClient, href, type);
+		lazyloader = new RestListLazyLoader(restClient, href, type);
 		
 		when(restClient.getForList(href, type)).thenReturn((List) listObject);
 	}
@@ -51,6 +52,13 @@ public class RestListLazyLoaderTest {
 		assertEquals(1, ((List<Person>)loadedObject).size());
 		
 		verify(restClient).getForList(href, type);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void lazyLoadingByEnhancer() {
+		List<Person> list = (List<Person>) Enhancer.create(List.class, lazyloader);
+		assertEquals(1, list.size());
 	}
 
 }

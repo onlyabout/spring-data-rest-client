@@ -76,5 +76,5 @@ public class JacksonJsonSerializerTest {
 		verify(typeFactory).getMapResourceType(resourceType, keyType, valueType);
 		verify(mapper).readValue(jsonData, createdType);
 	}
-
+	
 }

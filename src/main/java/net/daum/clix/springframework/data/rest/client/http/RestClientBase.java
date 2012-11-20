@@ -137,14 +137,25 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 		return getForList(url, entityInfo.getJavaType());
 	}
 
+	/**
+	 * Returns {@link List<T>} for the given href.
+	 * 
+	 * @param href
+	 * 			the response must not be pageable.
+	 * @param type
+	 * 			type of entity for list.
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> List<T> getForList(String href, Class<T> type) {
-		if (isPageableRepository(type)) {
-			throw new UnsupportedOperationException("findAll for PagedAndSortingRepository is not supported.");
-		} else {
-			Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
-			return resourcesToIterable(res);
-		}
+//		if (isPageableRepository(type)) {
+//			throw new UnsupportedOperationException("findAll for PagedAndSortingRepository is not supported.");
+//		} else {
+//		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
+//		return resourcesToIterable(res);
+//		}
+		Resources<Resource<T>> res = (Resources<Resource<T>>) executeGet(href, Resources.class, type);
+		return resourcesToIterable(res);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -185,8 +196,10 @@ public abstract class RestClientBase implements RestClient, ApplicationContextAw
 
 		Pageable pageable = null;
 		for (Object parameter : parameters) {
-			if (Pageable.class.isAssignableFrom(parameter.getClass()))
+			if (Pageable.class.isAssignableFrom(parameter.getClass())) {
 				pageable = (Pageable) parameter;
+				break;
+			}
 		}
 
 		if (pageable == null) {

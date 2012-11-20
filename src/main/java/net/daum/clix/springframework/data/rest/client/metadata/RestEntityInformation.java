@@ -50,8 +50,10 @@ public class RestEntityInformation<T, ID extends Serializable> extends RestEntit
 			idField.setAccessible(true);
 			return (ID) idField.get(entity);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(e);
+			ReflectionUtils.handleReflectionException(e);
 		}
+		
+		return null;
 	}
 
 	public void setId(final T entity, final ID id) {
