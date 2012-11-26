@@ -65,7 +65,8 @@ public class JacksonJsonSerializer implements JsonSerializer {
 		try {
 			return mapper.readValue(jsonData, type);
 		} catch (Exception e) {
-			LOG.error("Deserialization failed.", e);
+			LOG.error("Deserialization failed for exception : ", e);
+			LOG.error("Deserialization failed for json body.", new String(jsonData));
 		}
 
 		return null;
