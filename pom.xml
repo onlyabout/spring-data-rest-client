@@ -13,7 +13,7 @@
 
 		<springframeworkdata.version>1.0.0.RELEASE</springframeworkdata.version>
 		<cglib.version>2.2.2</cglib.version>
-		<httpclient.version>4.2.1</httpclient.version>
+		<httpclient.version>4.5.13</httpclient.version>
 
 		<!-- For test -->
 		<springframework.version>3.1.2.RELEASE</springframework.version>
