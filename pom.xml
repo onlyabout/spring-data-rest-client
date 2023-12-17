@@ -72,12 +72,12 @@
 		<repository>
 			<id>spring-milestone</id>
 			<name>Spring Maven MILESTONE Repository</name>
-			<url>http://repo.springsource.org/libs-milestone</url>
+			<url>https://repo.springsource.org/libs-milestone</url>
 		</repository>
 		<repository>
 			<id>spring-snapshot</id>
 			<name>Spring Maven SNAPSHOT Repository</name>
-			<url>http://repo.springsource.org/snapshot</url>
+			<url>https://repo.springsource.org/snapshot</url>
 		</repository>
 	</repositories>
 
